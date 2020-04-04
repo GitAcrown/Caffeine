@@ -1,5 +1,6 @@
 import os
 import time
+from copy import deepcopy
 from datetime import datetime
 
 import discord
@@ -60,7 +61,7 @@ class SonarAPI:
 
     def reset_server_preload(self, server):
         data = self.get_server(server, "settings")["logs_groups"]
-        change = self.preload
+        change = deepcopy(self.preload)
         for key in self.preload:
             if key.startswith(str(server.id)):
                 del change[key]
