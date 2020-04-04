@@ -395,7 +395,7 @@ class Sonar:
                 em.set_footer(text="Membre ID: {}".format(user.id))
                 await self.api.publish_log(user.server, "member_ban", em)
 
-    def user_unban(self, user):
+    async def user_unban(self, user):
         if type(user) is discord.Member:
             if self.api.preload_channel(user.server, "member_unban"):
                 ts = datetime.utcnow()
@@ -404,7 +404,7 @@ class Sonar:
                 em.set_footer(text="Membre ID: {}".format(user.id))
                 await self.api.publish_log(user.server, "member_unban", em)
 
-    def server_disconnect(self, server):
+    async def server_disconnect(self, server):
         if self.cache["servers_last_warning"] + 7200 <= time.time():
             self.cache["servers_last_warning"] = time.time()
 
