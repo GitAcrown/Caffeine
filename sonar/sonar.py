@@ -342,8 +342,8 @@ class Sonar:
                     em.set_footer(text="Membre ID: {} • Nouvel avatar (affiché)".format(after.id))
                     await self.api.publish_log(after.server, "member_update_avatar", em)
 
-            if before.game.name != after.game.name:
-                if not before.game.name and after.game.name:
+            if before.game != after.game:
+                if not before.game and after.game:
                     if self.api.preload_channel(after.server, "member_update_status"):
                         em = discord.Embed(description="A un nouveau statut `{}`".format(after.game.name), color=0xfff4e1,
                                            timestamp=ts)  # Blanc sale
@@ -351,7 +351,7 @@ class Sonar:
                         em.set_thumbnail(url=after.avatar_url)
                         em.set_footer(text="Membre ID: {}".format(after.id))
                         await self.api.publish_log(after.server, "member_update_status", em)
-                elif before.game.name and not after.game.name:
+                elif before.game and not after.game:
                     if self.api.preload_channel(after.server, "member_update_status"):
                         em = discord.Embed(description="N'a plus son statut `{}`".format(after.game.name), color=0xfff4e1,
                                            timestamp=ts)  # Blanc sale
@@ -360,7 +360,7 @@ class Sonar:
                         em.set_footer(text="Membre ID: {}".format(after.id))
                         await self.api.publish_log(after.server, "member_update_status", em)
 
-                elif before.game.name and after.game.name:
+                elif before.game and after.game:
                     if self.api.preload_channel(after.server, "member_update_status"):
                         em = discord.Embed(description="A changé son statut de `{}` pour `{}`".format(
                             before.game.name, after.game.name), color=0xfff4e1, timestamp=ts)  # Blanc sale
