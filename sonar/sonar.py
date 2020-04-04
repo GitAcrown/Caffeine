@@ -342,7 +342,7 @@ class Sonar:
             if before.avatar_url != after.avatar_url:
                 if self.api.preload_channel(after.server, "member_update_avatar"):
                     em = discord.Embed(description="A changé son avatar", color=0x212121, timestamp=ts)  # Gris foncé
-                    em.set_author(name=str(after) + " ─ Retrait du surnom", icon_url=after.avatar_url)
+                    em.set_author(name=str(after) + " ─ Changement d'avatar", icon_url=after.avatar_url)
                     em.set_thumbnail(url=after.avatar_url)
                     em.set_footer(text="Membre ID: {} • Nouvel avatar (affiché)".format(after.id))
                     await self.api.publish_log(after.server, "member_update_avatar", em)
