@@ -207,24 +207,26 @@ class Sonar:
 
     async def on_msg_delete(self, message):
         if message.server:
-            if self.api.preload_channel(message.server, "message_delete"):
-                em = discord.Embed(description=message.content, timestamp=message.timestamp,
-                                   color=0xE46464)  # Rouge pastel
-                em.set_author(name=str(message.author) + " ─ Message supprimé", icon_url=message.author.avatar_url)
-                em.set_footer(text="Auteur ID: {} • Salon: #{}".format(message.author.id, message.channel.name))
-                await self.api.publish_log(message.server, "message_delete", em)
+            if message.author != self.bot.user:
+                if self.api.preload_channel(message.server, "message_delete"):
+                    em = discord.Embed(description=message.content, timestamp=message.timestamp,
+                                       color=0xE46464)  # Rouge pastel
+                    em.set_author(name=str(message.author) + " ─ Message supprimé", icon_url=message.author.avatar_url)
+                    em.set_footer(text="Auteur ID: {} • Salon: #{}".format(message.author.id, message.channel.name))
+                    await self.api.publish_log(message.server, "message_delete", em)
 
     async def on_msg_edit(self, before, after):
         if after.server:
-            if self.api.preload_channel(after.server, "message_edit"):
-                msg_url = "https://discordapp.com/channels/{}/{}/{}".format(after.server.id, after.channel.id, after.id)
-                em = discord.Embed(description="[Aller au message]({})".format(msg_url),
-                                   timestamp=after.edited_timestamp, color=0x6ED7D3)  # Bleu pastel
-                em.add_field(name="Avant", value=before.content, inline=False)
-                em.add_field(name="Après", value=after.content, inline=False)
-                em.set_author(name=str(after.author) + " ─ Message édité", icon_url=after.author.avatar_url)
-                em.set_footer(text="Auteur ID: {} • Msg ID: {}".format(after.author.id, after.id))
-                await self.api.publish_log(after.server, "message_edit", em)
+            if after.author != self.bot.user:
+                if self.api.preload_channel(after.server, "message_edit"):
+                    msg_url = "https://discordapp.com/channels/{}/{}/{}".format(after.server.id, after.channel.id, after.id)
+                    em = discord.Embed(description="[Aller au message]({})".format(msg_url),
+                                       timestamp=after.edited_timestamp, color=0x6ED7D3)  # Bleu pastel
+                    em.add_field(name="Avant", value=before.content, inline=False)
+                    em.add_field(name="Après", value=after.content, inline=False)
+                    em.set_author(name=str(after.author) + " ─ Message édité", icon_url=after.author.avatar_url)
+                    em.set_footer(text="Auteur ID: {} • Msg ID: {}".format(after.author.id, after.id))
+                    await self.api.publish_log(after.server, "message_edit", em)
 
     async def on_voice_update(self, before, after):
         if type(after) is discord.Member:
