@@ -194,12 +194,13 @@ class Sonar:
 
     async def on_msg_add(self, message):
         if message.server:
-            if self.api.preload_channel(message.server, "message_add"):
-                em = discord.Embed(description=message.content, timestamp=message.timestamp, color= 0x63A2D8) # Bleu clair
-                em.set_author(name=str(message.author) + " ─ Message posté", icon_url=message.author.avatar_url)
-                em.set_footer(text="Auteur ID: {} • Msg ID: {} • Salon: #{}".format(message.author.id, message.id,
-                                                                                    message.channel.name))
-                await self.api.publish_log(message.server, "message_add", em)
+            if message.author != self.bot.user:
+                if self.api.preload_channel(message.server, "message_add"):
+                    em = discord.Embed(description=message.content, timestamp=message.timestamp, color= 0x63A2D8) # Bleu clair
+                    em.set_author(name=str(message.author) + " ─ Message posté", icon_url=message.author.avatar_url)
+                    em.set_footer(text="Auteur ID: {} • Msg ID: {} • Salon: #{}".format(message.author.id, message.id,
+                                                                                        message.channel.name))
+                    await self.api.publish_log(message.server, "message_add", em)
 
     async def on_msg_delete(self, message):
         if message.server:
