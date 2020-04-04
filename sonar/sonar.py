@@ -220,7 +220,7 @@ class Sonar:
                 em = discord.Embed(description="[Aller au message]({})".format(msg_url),
                                    timestamp=after.edited_timestamp, color=0x6ED7D3)  # Bleu pastel
                 em.add_field(name="Avant", value=before.content, inline=False)
-                em.add_field(name="Après", value=before.content, inline=False)
+                em.add_field(name="Après", value=after.content, inline=False)
                 em.set_author(name=str(after.author) + " ─ Message édité", icon_url=after.author.avatar_url)
                 em.set_footer(text="Auteur ID: {} • Msg ID: {}".format(after.author.id, after.id))
                 await self.api.publish_log(after.server, "message_edit", em)
