@@ -60,9 +60,11 @@ class SonarAPI:
 
     def reset_server_preload(self, server):
         data = self.get_server(server, "settings")["logs_groups"]
+        change = self.preload
         for key in self.preload:
             if key.startswith(str(server.id)):
-                del self.preload[key]
+                del change[key]
+        self.preload = change
         return True
 
     async def publish_log(self, server, group, embed):
