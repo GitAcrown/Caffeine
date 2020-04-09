@@ -168,7 +168,7 @@ class Nooknet:
                            timestamp=ctx.message.timestamp)
         title = user.name if user.display_name == user.name else "{} « {} »".format(user.name, user.display_name)
         em.set_author(name=title, icon_url=user.avatar_url)
-        em.set_thumbnail(url=data["photo"] if data["photo"] else None)
+        em.set_thumbnail(url=data["photo"])
         if data["code"]:
             em.add_field(name="Code ami", value="SW-{}".format(data["code"] if data["code"] else "????-????-????"), inline=False)
         if data["island_name"] and data["user_name"]:
