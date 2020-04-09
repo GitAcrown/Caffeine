@@ -246,12 +246,12 @@ class Nooknet:
             await self.bot.say("**Message retiré** • Il ne s'affichera plus sur votre profil Nooknet.")
 
     @commands.group(name="navet", aliases=["turnip"], pass_context=True, no_pm=True)
-    async def navet(self, ctx):
+    async def _navet(self, ctx):
         """Mise en commun des valeurs des navets"""
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
 
-    @navet.command(pass_context=True)
+    @_navet.command(pass_context=True)
     async def add(self, ctx, valeur: int):
         """Ajouter la valeur des navets sur son île sur la période en cours"""
         serv = self.get_server(ctx.message.server)
@@ -263,7 +263,7 @@ class Nooknet:
             await self.new_turnip_value(ctx.message.author, valeur)
             await self.bot.say("**Valeur ajoutée** • Consultez le registre avec `;navet info`")
 
-    @navet.command(pass_context=True, name="info")
+    @_navet.command(pass_context=True, name="info")
     async def values_list(self, ctx, date = None):
         """Liste les valeurs des navets au jour (max. 10 jours) et période rentré (par défaut la période en cours)
 
