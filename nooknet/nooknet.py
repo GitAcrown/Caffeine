@@ -21,7 +21,8 @@ class Nooknet:
 
     def get_server(self, server):
         if server.id not in self.data["SERVERS"]:
-            self.data["SERVERS"][server.id] = {"navets": {}}
+            self.data["SERVERS"][server.id] = {"USERS":{},
+                                               "navets": {}}
             self.save()
         return self.data["SERVERS"][server.id]
 
@@ -120,7 +121,7 @@ class Nooknet:
         return []
 
     def get_member(self, user: discord.Member):
-        server = self.get_server(user.server)
+        server = self.get_server(user.server)["USERS"]
         if user.id not in server:
             server[user.id] = {"code": "",
                                "photo": "",
@@ -169,7 +170,7 @@ class Nooknet:
         em.set_author(name=title, icon_url=user.avatar_url)
         em.set_thumbnail(url=data["photo"] if data["photo"] else None)
         if data["code"]:
-            em.add_field(name="Code ami", value="SW-{}".format(data["code"]), inline=False)
+            em.add_field(name="Code ami", value="SW-{}".format(data["code"] if data["code"] else "????-????-????"), inline=False)
         if data["island_name"] and data["user_name"]:
             em.add_field(name="Île et nom", value="**{}** — *{}*".format(data["island_name"], data["user_name"]), inline=False)
         elif data["island_name"] and not data["user_name"]:
