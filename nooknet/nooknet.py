@@ -291,12 +291,16 @@ class Nooknet:
                         user = user.mention
                     except:
                         user = "@" + self.bot.get_user_info(v[0]).name
-                    txt += "`{}` — {}\n".format(v[1], user)
+                    if len(txt) < 1950:
+                        txt += "`{}` — {}\n".format(v[1], user)
+                        if len(txt) >= 1950:
+                            txt += "(...)"
 
                 em = discord.Embed(
                     description=txt, color=0x00962A, timestamp=ctx.message.timestamp)  # Vert_feuille
                 em.set_author(name="Registre des valeurs du navet", icon_url="https://i.imgur.com/NucNCk2.png")
                 em.set_footer(text="Période = {} {}".format(date, "(Achat)" if dimanche else "(Vente)"))
+                await self.bot.say(embed=em)
             else:
                 await self.bot.say("**Aucune donnée pour ce jour** — Elles ont peut-être expirées ou la date est trop lointaine.")
         else:
