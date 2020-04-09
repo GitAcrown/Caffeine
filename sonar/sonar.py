@@ -26,6 +26,8 @@ CHANNELS = {"message_add": "Diffuse à chaque message posté",
             "member_update_nickname": "Diffuse lorsqu'un membre change son surnom (nom visible)",
             "member_update_avatar": "Diffuse lorsqu'un membre change son avatar",
             "member_update_status": "Diffuse lorsqu'un membre change son statut (jeu ou personnalisé)",
+            "app_nooknet_navet_lowest": "Diffuse lorsqu'un membre a rentré la valeur du navet la plus basse de la période (dimanche seulement)",
+            "app_nooknet_navet_highest": "Diffuse lorsqu'un membre a rentré la valeur du navet la plus haute de la période",
             "warning_low": "Diffuse des avertissements de basse priorité",
             "warning_high": "Diffuse des avertissements de haute priorité"}
 
@@ -48,8 +50,16 @@ class SonarAPI:
             self.save(True)
         return self.data[server.id][section.upper()] if section else self.data[server.id]
 
+    def get_user_logs(self, user):
+        logs = self.get_server(user.server, "logs")
+        if user.id not in logs:
+            logs[user.id] = []
+            self.save()
+        return logs[user.id]
+
 
     def preload_channel(self, server, group):
+        """Précharge les salons où vont être envoyés les logs"""
         superkey = "{}:{}".format(server.id, group)
         if superkey not in self.preload:
             data = self.get_server(server, "settings")["logs_groups"]
@@ -60,6 +70,7 @@ class SonarAPI:
         return self.preload[superkey]
 
     def reset_server_preload(self, server):
+        """Reset la liste des salons préchargés du serveur (nécessaire après tout changement dans le registre)"""
         data = self.get_server(server, "settings")["logs_groups"]
         change = deepcopy(self.preload)
         for key in self.preload:
@@ -69,6 +80,7 @@ class SonarAPI:
         return True
 
     async def publish_log(self, server, group, embed):
+        """Publier la notification sur les salons connectés"""
         channel = self.preload_channel(server, group)
         if channel:
             await self.bot.send_message(channel, embed=embed)
@@ -76,11 +88,21 @@ class SonarAPI:
         return False
 
     async def global_publish_log(self, group, embed):
+        """Publier une notification sur tous les salons connectés de tous les serveurs"""
         for sid in self.data:
             server = self.bot.get_server(sid)
             if self.preload_channel(server, group):
                 await self.publish_log(server, group, embed)
         return True
+
+    def add_user_log(self, user, namecode, description):
+        """Ajoute un log personnel à un membre (namecode = nom normalisé facilement exploitable)"""
+        data = self.get_user_logs(user.server)
+        obj = (time.time(), namecode.lower(), description)
+        data.append(obj)
+        if len(data) > 100:
+            data.remove(data[-1])
+        self.save()
 
 
 class Sonar:
