@@ -169,8 +169,7 @@ class Nooknet:
         title = user.name if user.display_name == user.name else "{} « {} »".format(user.name, user.display_name)
         em.set_author(name=title, icon_url=user.avatar_url)
         em.set_thumbnail(url=data["photo"])
-        if data["code"]:
-            em.add_field(name="Code ami", value="SW-{}".format(data["code"] if data["code"] else "????-????-????"), inline=False)
+        em.add_field(name="Code ami", value="SW-{}".format(data["code"] if data["code"] else "????-????-????"), inline=False)
         if data["island_name"] and data["user_name"]:
             em.add_field(name="Île et nom", value="**{}** — *{}*".format(data["island_name"], data["user_name"]), inline=False)
         elif data["island_name"] and not data["user_name"]:
