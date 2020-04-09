@@ -53,7 +53,7 @@ class Nooknet:
 
         # Alertes de logs
         if dimanche:
-            if value < self.get_lowest_turnip(user.server, date):
+            if value < self.get_lowest_turnip(user.server, date)[1]:
                 if api.preload_channel(user.server, "app_nooknet_navet_lowest"):
                     em = discord.Embed(
                         description="Les navets les moins chers (**{}** clochettes) sont désormais chez {}".format(value, user.mention),
@@ -62,7 +62,7 @@ class Nooknet:
                     em.set_footer(text="Période: {}".format(peritxt))
                     await api.publish_log(user.server, "app_nooknet_navet_lowest", em)
 
-        elif value > self.get_highest_turnip(user.server, date):
+        elif value > self.get_highest_turnip(user.server, date)[1]:
             if api.preload_channel(user.server, "app_nooknet_navet_highest"):
                 em = discord.Embed(
                     description="La reprise la plus profitable (**{}** clochettes) est désormais chez {}".format(value,
