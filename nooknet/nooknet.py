@@ -270,9 +270,10 @@ class Nooknet:
 
         La date doit être au format JJ/MM/AAAA/PP avec pour PP soit AM (matin) ou PM (après-midi)
         Ex: 01/04/2020/PM"""
-        if not date: date = datetime.now().strftime("%d/%m/%Y") + "/" + "AM" if datetime.now().hour < 12 else "PM"
+        if not date:
+            date = datetime.now().strftime("%d/%m/%Y") + "/" + "AM" if datetime.now().hour < 12 else "PM"
         dimanche = datetime.now().strftime("%A") == "Sunday"
-        if len(date) == 11:
+        if len(date) == 13:
             liste = self.get_day_turnip(ctx.message.server, date)
             if liste:
                 if dimanche:
