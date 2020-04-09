@@ -231,12 +231,13 @@ class Nooknet:
             await self.bot.say("**Nom retiré** • Il ne s'affichera plus sur votre profil Nooknet.")
 
     @_nooknet.command(pass_context=True)
-    async def msg(self, ctx, message: str = ""):
+    async def msg(self, ctx, *message):
         """Ajouter/modifier/retirer un message sur votre profil
 
         Laisser le champ vide permet de retirer l'affichage de celui-ci"""
         data = self.get_member(ctx.message.author)
         if message:
+            message = " ".join(message)
             data["message"] = message
             self.save()
             await self.bot.say("**Message ajouté** • Il s'affichera sur votre profil Nooknet (`;nook`).")
