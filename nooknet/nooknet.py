@@ -41,6 +41,7 @@ class Nooknet:
         periode = "AM" if datetime.now().hour < 12 else "PM"
         date = datetime.now().strftime("%d/%m/%Y") + "/" + periode
         peritxt = "{} {} {}".format(today_trad, datetime.now().strftime("%m/%Y"), "Matin" if periode == "AM" else "Après-midi")
+        already = False
 
         # Création de la période
         if date not in data["navets"]:
@@ -50,6 +51,8 @@ class Nooknet:
                 data["navets"][date] = {"type": "buy" if dimanche else "sell",
                                         "day": datetime.now().strftime("%d/%m/%Y"),
                                         "values": []}
+                data["navets"][date]["values"].append((user.id, value))
+                already = True
 
         # Alertes de logs
         if dimanche:
@@ -73,7 +76,8 @@ class Nooknet:
                 await api.publish_log(user.server, "app_nooknet_navet_highest", em)
 
         # Ajout de la valeur au registre
-        data["navets"][date]["values"].append((user.id, value))
+        if not already:
+            data["navets"][date]["values"].append((user.id, value))
 
         # Nettoyage des données plus vieilles que 10 jours
         before = datetime.now() - timedelta(days = 10)
