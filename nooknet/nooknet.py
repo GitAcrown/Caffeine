@@ -245,6 +245,7 @@ class Nooknet:
             self.save()
             await self.bot.say("**Message retiré** • Il ne s'affichera plus sur votre profil Nooknet.")
 
+
     @commands.group(name="navet", aliases=["turnip"], pass_context=True, no_pm=True)
     async def _navet(self, ctx):
         """Mise en commun des valeurs des navets"""
@@ -314,3 +315,4 @@ def setup(bot):
     check_folders()
     check_files()
     n = Nooknet(bot)
+    bot.add_cog(n)
