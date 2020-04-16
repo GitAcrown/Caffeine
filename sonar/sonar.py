@@ -161,22 +161,23 @@ class Sonar:
                         data[idh]["n"] += 1
             except:
                 pass
-            await self.bot.say("**Scan terminé** — Classement et impression des résultats...")
-            txt = "Messages de plus de {} caractères postés sur {}\n\n".format(long_min, channel.name)
-            datalist = [(e, data[e]["n"], data[e]["txt"]) for e in data]
-            sortedl = sorted(datalist, key=operator.itemgetter(1), reverse=True)
-            for e in sortedl:
-                txt += "#{} = {}\n" \
-                       "{}\n\n".format(e[0], e[1], e[2])
-            filename = "SCAN_{}.txt".format(time.time())
-            file = open("data/sonar/temp/{}".format(filename), "w", encoding="UTF-8")
-            file.write(txt)
-            file.close()
-            try:
-                await self.bot.send_file(ctx.message.channel, "data/sonar/temp/{}".format(filename))
-                os.remove("data/sonar/temp/{}".format(filename))
-            except Exception as e:
-                await self.bot.say("**Impossible d'upload le résultat du scan** — `{}`".format(e))
+
+        await self.bot.say("**Scan terminé** — Classement et impression des résultats...")
+        txt = "Messages de plus de {} caractères postés sur {}\n\n".format(long_min, channel.name)
+        datalist = [(e, data[e]["n"], data[e]["txt"]) for e in data]
+        sortedl = sorted(datalist, key=operator.itemgetter(1), reverse=True)
+        for e in sortedl:
+            txt += "#{} = {}\n" \
+                   "{}\n\n".format(e[0], e[1], e[2])
+        filename = "SCAN_{}.txt".format(time.time())
+        file = open("data/sonar/temp/{}".format(filename), "w", encoding="UTF-8")
+        file.write(txt)
+        file.close()
+        try:
+            await self.bot.send_file(ctx.message.channel, "data/sonar/temp/{}".format(filename))
+            os.remove("data/sonar/temp/{}".format(filename))
+        except Exception as e:
+            await self.bot.say("**Impossible d'upload le résultat du scan** — `{}`".format(e))
 
 
     @commands.group(name="logs", aliases=["sonar"], pass_context=True, no_pm=True)
