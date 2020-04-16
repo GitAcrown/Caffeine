@@ -137,8 +137,9 @@ class Sonar:
         channel = ctx.message.channel
         n = 0
         data = {}
-        await self.bot.say("🔍 **Recherche** — `{}`")
-        async for msg in self.bot.logs_from(channel, limit=max):
+        await self.bot.say("🔍 **Recherche** — Messages de + de {} caractères dans {} msg de {}".format(long_min,
+                                                                                                        max_scan, channel.mention))
+        async for msg in self.bot.logs_from(channel, limit=max_scan):
             if n == (0.10 * max_scan):
                 await self.bot.say("**Progression du scan** — Env. 10%")
             if n == (0.25 * max_scan):
