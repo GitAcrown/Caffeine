@@ -153,7 +153,7 @@ class Sonar:
             n += 1
             try:
                 if len(msg.content) >= long_min:
-                    idh = hash(msg.content)
+                    idh = hash(msg.content[:100])
                     if idh not in data:
                         data[idh] = {"txt": msg.content,
                                      "n": 1}
