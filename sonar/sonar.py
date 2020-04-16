@@ -1,3 +1,4 @@
+import operator
 import os
 import time
 from copy import deepcopy
@@ -111,6 +112,71 @@ class Sonar:
         self.bot = bot
         self.api = SonarAPI(bot, "data/sonar/data.json")
         self.cache = {"servers_last_warning": 0}
+
+    def leven(self, s1, s2):
+        if len(s1) < len(s2):
+            return self.leven(s2, s1)
+        # len(s1) >= len(s2)
+        if len(s2) == 0:
+            return len(s1)
+        previous_row = range(len(s2) + 1)
+        for i, c1 in enumerate(s1):
+            current_row = [i + 1]
+            for j, c2 in enumerate(s2):
+                insertions = previous_row[
+                                 j + 1] + 1
+                deletions = current_row[j] + 1
+                substitutions = previous_row[j] + (c1 != c2)
+                current_row.append(min(insertions, deletions, substitutions))
+            previous_row = current_row
+
+        return previous_row[-1]
+
+    @commands.command(aliases=["sl"], pass_context=True)
+    async def scanlong(self, ctx, long_min: int, max_scan: int):
+        channel = ctx.message.channel
+        n = 0
+        data = {}
+        await self.bot.say("🔍 **Recherche** — `{}`")
+        async for msg in self.bot.logs_from(channel, limit=max):
+            if n == (0.10 * max_scan):
+                await self.bot.say("**Progression du scan** — Env. 10%")
+            if n == (0.25 * max_scan):
+                await self.bot.say("**Progression du scan** — Env. 25%")
+            if n == (0.40 * max_scan):
+                await self.bot.say("**Progression du scan** — Env. 40%")
+            if n == (0.65 * max_scan):
+                await self.bot.say("**Progression du scan** — Env. 65%")
+            if n == (0.85 * max_scan):
+                await self.bot.say("**Progression du scan** — Env. 85%")
+            n += 1
+            try:
+                if len(msg.content) >= long_min:
+                    idh = hash(msg.content)
+                    if idh not in data:
+                        data[idh] = {"txt": msg.content,
+                                     "n": 1}
+                    else:
+                        data[idh]["n"] += 1
+            except:
+                pass
+            await self.bot.say("**Scan terminé** — Classement et impression des résultats...")
+            txt = "Messages de plus de {} caractères postés sur {}\n\n".format(long_min, channel.name)
+            datalist = [(e, data[e]["n"], data[e]["txt"]) for e in data]
+            sortedl = sorted(datalist, key=operator.itemgetter(1), reverse=True)
+            for e in sortedl:
+                txt += "#{} = {}\n" \
+                       "{}\n\n".format(e[0], e[1], e[2])
+            filename = "SCAN_{}.txt".format(time.time())
+            file = open("data/sonar/temp/{}".format(filename), "w", encoding="UTF-8")
+            file.write(txt)
+            file.close()
+            try:
+                await self.bot.send_file(ctx.message.channel, "data/sonar/temp/{}".format(filename))
+                os.remove("data/sonar/temp/{}".format(filename))
+            except Exception as e:
+                await self.bot.say("**Impossible d'upload le résultat du scan** — `{}`".format(e))
+
 
     @commands.group(name="logs", aliases=["sonar"], pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_messages=True)
@@ -450,6 +516,10 @@ def check_folders():
     if not os.path.exists("data/sonar"):
         print("Création du dossier SONAR...")
         os.makedirs("data/sonar")
+
+    if not os.path.exists("data/sonar/temp"):
+        print("Création du dossier SONAR/TEMP...")
+        os.makedirs("data/sonar/temp")
 
 
 def check_files():
