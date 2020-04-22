@@ -90,12 +90,16 @@ class Misc:
         if sys:
             if role:
                 if role.id in sys and role in server.roles:
-                    if role in user.roles:
-                        await self.bot.remove_roles(user, role)
-                        await self.bot.say("**Rôle `{}` retiré** ─ Vous ne disposez désormais plus de ce rôle.".format(role.name))
-                    else:
-                        await self.bot.add_roles(user, role)
-                        await self.bot.say("**Rôle `{}` ajouté** ─ Vous disposez désormais de ce rôle.".format(role.name))
+                    try:
+                        if role in user.roles:
+                            await self.bot.remove_roles(user, role)
+                            await self.bot.say("**Rôle `{}` retiré** ─ Vous ne disposez désormais plus de ce rôle.".format(role.name))
+                        else:
+                            await self.bot.add_roles(user, role)
+                            await self.bot.say("**Rôle `{}` ajouté** ─ Vous disposez désormais de ce rôle.".format(role.name))
+                    except:
+                        await self.bot.say(
+                            "**Permissions manquantes** ─ Je n'ai pas le droit de vous attribuer/retirer ce rôle")
                 else:
                     await self.bot.say("**Rôle inconnu** ─ Il n'existe pas ou il n'est pas auto-attribuable")
             else:
@@ -122,12 +126,15 @@ class Misc:
                 elif rep.content in [str(i[0]) for i in rolelist]:
                     i = [i for i in rolelist if str(i[0]) == rep.content][0]
                     role = i[1]
-                    if role in user.roles:
-                        await self.bot.remove_roles(user, role)
-                        await self.bot.say("**Rôle `{}` retiré** ─ Vous ne disposez désormais plus de ce rôle.".format(role.name))
-                    else:
-                        await self.bot.add_roles(user, role)
-                        await self.bot.say("**Rôle `{}` ajouté** ─ Vous disposez désormais de ce rôle.".format(role.name))
+                    try:
+                        if role in user.roles:
+                            await self.bot.remove_roles(user, role)
+                            await self.bot.say("**Rôle `{}` retiré** ─ Vous ne disposez désormais plus de ce rôle.".format(role.name))
+                        else:
+                            await self.bot.add_roles(user, role)
+                            await self.bot.say("**Rôle `{}` ajouté** ─ Vous disposez désormais de ce rôle.".format(role.name))
+                    except:
+                        await self.bot.say("**Permissions manquantes** ─ Je n'ai pas le droit de vous attribuer/retirer ce rôle")
                 elif rep.content.lower() in ["stop", "quit", "quitter", "0"]:
                     await self.bot.delete_message(msg)
                 else:
