@@ -120,7 +120,7 @@ class Misc:
                 if rep is None:
                     await self.bot.delete_message(msg)
                 elif rep.content in [str(i[0]) for i in rolelist]:
-                    i = [str(i[0]) for i in rolelist if str(i[0]) == rep.content][0]
+                    i = [i for i in rolelist if str(i[0]) == rep.content][0]
                     role = i[1]
                     if role in user.roles:
                         await self.bot.remove_roles(user, role)
