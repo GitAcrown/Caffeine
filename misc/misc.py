@@ -155,16 +155,15 @@ class Misc:
 
 
 def check_folders():
-    folders = ("data", "data/misc/")
-    for folder in folders:
-        if not os.path.exists(folder):
-            print("Création du fichier " + folder)
-            os.makedirs(folder)
+    if not os.path.exists("data/misc"):
+        print("Création du dossier MISC...")
+        os.makedirs("data/misc")
 
 
 def check_files():
     if not os.path.isfile("data/misc/data.json"):
-        fileIO("data/nooknet/data.json", "save", {})
+        print("Création de misc/data.json")
+        fileIO("data/misc/data.json", "save", {})
 
 
 def setup(bot):
