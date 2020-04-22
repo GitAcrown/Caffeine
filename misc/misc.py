@@ -80,7 +80,7 @@ class Misc:
         em.set_footer(text="Obtenir un rôle = ;iam <nom du rôle>")
         await self.bot.say(embed=em)
 
-    @commands.command(aliases=["iamnot"], pass_context=True, no_pm=True)
+    @commands.command(pass_context=True, no_pm=True)
     async def get(self, ctx, role: discord.Role = None):
         """Permet de s'attribuer ou se retirer un rôle"""
         server = ctx.message.server
@@ -138,8 +138,10 @@ class Misc:
 
     @commands.command(pass_context=True)
     @checks.admin_or_permissions(manage_roles=True)
-    async def set(self, ctx, action: str, role: discord.Role):
-        """Configure un rôle (add/remove) pour qu'il puisse être ajouté et retiré seul par un membre"""
+    async def set(self, ctx, role: discord.Role):
+        """Configure un rôle pour qu'il puisse être ajouté et retiré seul par un membre
+
+        Utilisez ;iam list pour voir les rôles disponibles"""
         server = ctx.message.server
         if role in server.roles:
             if self.add_iam_role(role):
