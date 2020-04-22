@@ -62,8 +62,8 @@ class Misc:
         if ctx.invoked_subcommand is None:
             await ctx.invoke(self.get, role=role)
 
-    @commands.command(pass_context=True)
-    async def list(self, ctx):
+    @commands.command(name="list", pass_context=True)
+    async def iam_list(self, ctx):
         """Affiche les rôles auto-attribuables disponibles"""
         server = ctx.message.server
         user = ctx.message.author
@@ -80,8 +80,8 @@ class Misc:
         em.set_footer(text="Obtenir un rôle = ;iam <nom du rôle>")
         await self.bot.say(embed=em)
 
-    @commands.command(pass_context=True, no_pm=True)
-    async def get(self, ctx, role: discord.Role = None):
+    @commands.command(name="get", pass_context=True, no_pm=True)
+    async def iam_get(self, ctx, role: discord.Role = None):
         """Permet de s'attribuer ou se retirer un rôle"""
         server = ctx.message.server
         user = ctx.message.author
@@ -136,9 +136,9 @@ class Misc:
         else:
             await self.bot.say("Aucun rôle n'a encore été configuré pour être attribuable par ce biais.")
 
-    @commands.command(pass_context=True)
+    @commands.command(name="set", pass_context=True)
     @checks.admin_or_permissions(manage_roles=True)
-    async def set(self, ctx, role: discord.Role):
+    async def iam_set(self, ctx, role: discord.Role):
         """Configure un rôle pour qu'il puisse être ajouté et retiré seul par un membre
 
         Utilisez ;iam list pour voir les rôles disponibles"""
