@@ -131,7 +131,7 @@ class Misc:
                 elif rep.content.lower() in ["stop", "quit", "quitter", "0"]:
                     await self.bot.delete_message(msg)
                 else:
-                    await self.bot.say("**Réponse invalide** ─ Réessayez en tapant un nombre après avoir fait `;iam`")
+                    await self.bot.say("**Réponse invalide** ─ Réessayez en tapant un nombre après avoir fait `;iam get`")
                     await self.bot.delete_message(msg)
         else:
             await self.bot.say("Aucun rôle n'a encore été configuré pour être attribuable par ce biais.")
