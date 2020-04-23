@@ -272,7 +272,7 @@ class Misc:
             await self.bot.say("**Rôle inconnu/trop éloigné** ─ J'ai peut-être trouvé le rôle demandé, mais par mesure de sécurité (car trop éloigné de son nom réel) l'opération n'est pas réalisée.")
 
 
-    async def on_message(self, message):
+    async def on_mess(self, message):
         if message.server:
             if not message.author.bot:
                 user = message.author
@@ -295,6 +295,7 @@ class Misc:
                                                     await self.bot.add_reaction(message, "✅")
                                                     if g.id not in notif:
                                                         if api.preload_channel(user.server, "app_autoattrib"):
+                                                            print("log auto_attrib")
                                                             em = discord.Embed(
                                                                 description="A obtenu le rôle {} automatiquement après demande à un modérateur.".format(g.name),
                                                                 color=0x7B68EE, timestamp=datetime.utcnow())  # Violet
@@ -322,5 +323,5 @@ def setup(bot):
     check_folders()
     check_files()
     n = Misc(bot)
-    bot.add_listener(n.on_message, "on_message")
+    bot.add_listener(n.on_mess, "on_message")
     bot.add_cog(n)
