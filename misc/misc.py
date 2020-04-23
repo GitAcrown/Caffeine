@@ -283,6 +283,7 @@ class Misc:
                         for mention in message.mentions:
                             if mention.server_permissions.manage_roles:
                                 detected = self.detect_roles_in_msg(message.server, message.content, 3)
+                                notif = []
                                 if detected:
                                     print(detected)
                                     for g in detected:
@@ -291,14 +292,16 @@ class Misc:
                                                 if g not in user.roles:
                                                     await self.bot.add_roles(user, g)
                                                     await self.bot.add_reaction(message, "✅")
-                                                    if api.preload_channel(user.server, "app_autoattrib"):
-                                                        em = discord.Embed(
-                                                            description="A obtenu le rôle {} automatiquement après demande à un modérateur.".format(g.name),
-                                                            color=0x7B68EE, timestamp=datetime.utcnow())  # Violet
-                                                        em.set_author(name=str(user) + " ─ Attribution automatique de rôle", icon_url=user.avatar_url)
-                                                        em.set_footer(text="Demandeur ID: {}".format(user.id))
-                                                        await api.publish_log(user.server, "app_autoattrib",
-                                                                              em)
+                                                    if g.id not in notif:
+                                                        if api.preload_channel(user.server, "app_autoattrib"):
+                                                            em = discord.Embed(
+                                                                description="A obtenu le rôle {} automatiquement après demande à un modérateur.".format(g.name),
+                                                                color=0x7B68EE, timestamp=datetime.utcnow())  # Violet
+                                                            em.set_author(name=str(user) + " ─ Attribution automatique de rôle", icon_url=user.avatar_url)
+                                                            em.set_footer(text="Demandeur ID: {}".format(user.id))
+                                                            await api.publish_log(user.server, "app_autoattrib",
+                                                                                  em)
+                                                            notif.append(g.id)
                                             except:
                                                 pass
 

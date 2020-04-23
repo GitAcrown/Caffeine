@@ -8,6 +8,8 @@ from __main__ import send_cmd_help
 from cogs.utils.dataIO import fileIO, dataIO
 from discord.ext import commands
 
+from .utils import checks
+
 
 class Nooknet:
     """Outils communautaires dédiés à AC:NH"""
@@ -264,6 +266,13 @@ class Nooknet:
             data["message"] = ""
             self.save()
             await self.bot.say("**Message retiré** • Il ne s'affichera plus sur votre profil Nooknet.")
+
+    @_nooknet.command(pass_context=True, hidden=True)
+    @checks.admin_or_permissions(administrator=True)
+    async def reset_all(self, ctx):
+        self.data = {"SERVERS": {}, "GLOBAL": {}}
+        self.save()
+        await self.bot.say("**Reset effectué**")
 
 
     @commands.group(name="navet", aliases=["turnip"], pass_context=True, no_pm=True)
