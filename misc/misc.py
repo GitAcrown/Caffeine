@@ -56,7 +56,7 @@ class Misc:
         self.save()
 
     def guess_role(self, server, guess, max_tol: int = 0):
-        roles = server.roles
+        roles = [r for r in server.roles if r.name != "@everyone"]
         auto_tol = False if max_tol else True
         if roles:
             guess = self.normalize(guess.lower())
@@ -273,11 +273,13 @@ class Misc:
                                         detected.append(guess)
 
                                 if detected:
+                                    print(detected)
                                     for g in detected:
                                         if g.id in rolelist:
                                             try:
                                                 if g not in user.roles:
                                                     await self.bot.add_roles(user, g)
+                                                    await self.bot.add_reaction(message, "✅")
                                                     if api.preload_channel(user.server, "app_autoattrib"):
                                                         em = discord.Embed(
                                                             description="A obtenu le rôle {} automatiquement après demande à un modérateur.".format(g.name),
