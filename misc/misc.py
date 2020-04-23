@@ -67,7 +67,7 @@ class Misc:
                     max_tol = len(r.name) - 1
                 gl.append([self.leven(guess, name), r])
             if gl:
-                sgl = sorted(gl, key=operator.itemgetter(0), reverse=True)
+                sgl = sorted(gl, key=operator.itemgetter(0))
                 if sgl[0]:
                     return sgl[0][1]
         return None
