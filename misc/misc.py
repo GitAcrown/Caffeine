@@ -326,7 +326,7 @@ class Misc:
                 else:
                     return self.wiki(recherche, "fr", False)
 
-    @commands.command(name="wikipedia", aliases=["w"], pass_context=True)
+    @commands.command(name="wikipedia", aliases=["wiki"], pass_context=True)
     async def wiki_search(self, ctx, *search):
         """Recherche sur Wikipedia (FR si dispo. sinon EN)"""
         search = " ".join(search)
