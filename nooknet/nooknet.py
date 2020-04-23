@@ -235,6 +235,21 @@ class Nooknet:
             await self.bot.say("**Nom retiré** • Il ne s'affichera plus sur votre profil Nooknet.")
 
     @_nooknet.command(pass_context=True)
+    async def villager(self, ctx, nom: str = ""):
+        """Ajouter/modifier/retirer le nom de votre villageois (votre avatar dans le jeu)
+
+        Laisser le champ vide permet de retirer l'affichage du nom"""
+        data = self.get_member(ctx.message.author)
+        if nom:
+            data["user_name"] = nom
+            self.save()
+            await self.bot.say("**Nom de villageois ajouté** • Il s'affichera sur votre profil Nooknet (`;nook`).")
+        else:
+            data["user_name"] = ""
+            self.save()
+            await self.bot.say("**Nom retiré** • Il ne s'affichera plus sur votre profil Nooknet.")
+
+    @_nooknet.command(pass_context=True)
     async def msg(self, ctx, *message):
         """Ajouter/modifier/retirer un message sur votre profil
 
@@ -289,10 +304,12 @@ class Nooknet:
                     try:
                         user = ctx.message.server.get_member(v[0])
                         user = user.mention
+                        ilename = self.get_member(user)["island_name"] if self.get_member(user)["island_name"] else ""
                     except:
                         user = "@" + self.bot.get_user_info(v[0]).name
+                        ilename = ""
                     if len(txt) < 1950:
-                        txt += "`{}` — {}\n".format(v[1], user)
+                        txt += "`{}` — {}{}\n".format(v[1], user, ilename)
                         if len(txt) >= 1950:
                             txt += "(...)"
 

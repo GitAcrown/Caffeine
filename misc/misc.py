@@ -1,4 +1,6 @@
+import operator
 import os
+from datetime import datetime
 
 import discord
 from discord.ext import commands
@@ -52,6 +54,54 @@ class Misc:
             if r not in [r.id for r in server.roles]:
                 del rolelist[r]
         self.save()
+
+    def guess_role(self, server, guess, max_tol: int = 0):
+        roles = server.roles
+        auto_tol = False if max_tol else True
+        if roles:
+            guess = self.normalize(guess.lower())
+            gl = []
+            for r in roles:
+                name = self.normalize(r.name.lower())
+                if len(r.name) < max_tol and auto_tol:
+                    max_tol = len(r.name) - 1
+                gl.append([self.leven(guess, name), r])
+            if gl:
+                sgl = sorted(gl, key=operator.itemgetter(0), reverse=True)
+                if sgl[0]:
+                    return sgl[0][1]
+        return None
+
+
+    def leven(self, s1, s2):
+        if len(s1) < len(s2):
+            return self.leven(s2, s1)
+        # len(s1) >= len(s2)
+        if len(s2) == 0:
+            return len(s1)
+        previous_row = range(len(s2) + 1)
+        for i, c1 in enumerate(s1):
+            current_row = [i + 1]
+            for j, c2 in enumerate(s2):
+                insertions = previous_row[
+                                 j + 1] + 1
+                deletions = current_row[j] + 1
+                substitutions = previous_row[j] + (c1 != c2)
+                current_row.append(min(insertions, deletions, substitutions))
+            previous_row = current_row
+
+        return previous_row[-1]
+
+    def normalize(self, txt):
+        ch1 = "àâçéèêëîïôöùûüÿ"
+        ch2 = "aaceeeeiioouuuy"
+        final = []
+        for l in txt.lower():
+            if l in ch1:
+                final.append(ch2[ch1.index(l)])
+            else:
+                final.append(l)
+        return "".join(final)
 
 
     @commands.group(name="iam", aliases=["iamnot"], pass_context=True, invoke_without_command=True, no_pm=True)
@@ -162,6 +212,82 @@ class Misc:
         else:
             await self.bot.say("Ce rôle n'existe pas sur ce serveur.")
 
+    @_iam.command(name="auto", pass_context=True)
+    @checks.admin_or_permissions(manage_roles=True)
+    async def iam_autoget(self, ctx):
+        """Active/Désactive l'attribution automatique des rôles (figurant dans la liste des rôles auto-attribuables) à un membre qui le demanderait à un modérateur
+
+        - Un nom incomplet sera complété automatiquement si assez proche du réel nom du rôle demandé
+        - Envoie un log (si configuré) lorsqu'un rôle est attribué
+        Par défaut désactivé"""
+        server = ctx.message.server
+        sys = self.get_setting(server, "iam_auto", False)
+        if sys == True:
+            self.data[server.id]["iam_auto"] = False
+            self.save()
+            await self.bot.say("**Attribution automatique désactivée** ─ Les membres n'auront pas automatiquement un rôle en vous mentionnant")
+        else:
+            self.data[server.id]["iam_auto"] = True
+            self.save()
+            await self.bot.say(
+                "**Attribution automatique activée** ─ Les membres obtiendront automatiquement le rôle demandé (s'il est configuré) lorsqu'on vous mentionnera (les modérateurs)")
+
+
+    @commands.command(aliases=["mgr"], pass_context=True)
+    @checks.admin_or_permissions(manage_roles=True)
+    async def magicrole(self, ctx, user: discord.Member, role):
+        """Attribue/retire à un membre désigné le rôle souhaité et devine de quel rôle il s'agit si le nom est incomplet
+
+        Attention, cette commande ignore les rôles configurés pour 'iam', elle pioche dans tous les rôles du serveur sans exception"""
+        server = ctx.message.server
+        guess = self.guess_role(server, role)
+        if self.leven(self.normalize(guess.name.lower()), self.normalize(role.lower())) <= len(guess.name) - 1:
+            try:
+                if guess in user.roles:
+                    await self.bot.remove_roles(user, guess)
+                    await self.bot.say("**Rôle `{}` retiré** ─ Ce rôle a été détecté et retiré à {}".format(guess.name, user.name))
+                else:
+                    await self.bot.add_roles(user, guess)
+                    await self.bot.say(
+                        "**Rôle `{}` attribué** ─ Ce rôle a été détecté et attribué à {}".format(guess.name, user.name))
+            except:
+                await self.bot.say("**Opération refusée** ─ J'ai détecté le rôle `{}` mais impossible de le donner/retirer pour ce membre".format(guess.name))
+        else:
+            await self.bot.say("**Rôle inconnu/trop éloigné** ─ J'ai peut-être trouvé le rôle demandé, mais par mesure de sécurité (car trop éloigné de son nom réel) l'opération n'est pas réalisée.")
+
+
+    async def on_message(self, message):
+        if message.server:
+            user = message.author
+            api = self.bot.get_cog("Sonar").api
+            if self.get_setting(message.server, "iam_auto", False):
+                if self.get_setting(message.server, "iam_roles", []):
+                    rolelist = self.get_setting(message.server, "iam_roles", [])
+                    if message.mentions:
+                        for mention in message.mentions:
+                            if mention.server_permissions.manage_roles:
+                                detected = []
+                                for w in message.content:
+                                    guess = self.guess_role(message.server, w, 3)
+                                    if guess:
+                                        detected.append(guess)
+
+                                if detected:
+                                    for g in detected:
+                                        if g.id in rolelist:
+                                            try:
+                                                if g not in user.roles:
+                                                    await self.bot.add_roles(user, g)
+                                                    if api.preload_channel(user.server, "app_autoattrib"):
+                                                        em = discord.Embed(
+                                                            description="A obtenu le rôle {} automatiquement après demande à un modérateur.".format(g.name),
+                                                            color=0x7B68EE, timestamp=datetime.utcnow())  # Violet
+                                                        em.set_author(name=str(user) + " ─ Attribution automatique de rôle", icon_url=user.avatar_url)
+                                                        em.set_footer(text="Demandeur ID: {}".format(user.id))
+                                                        await api.publish_log(user.server, "app_autoattrib",
+                                                                              em)
+                                            except:
+                                                pass
 
 def check_folders():
     if not os.path.exists("data/misc"):
@@ -179,4 +305,5 @@ def setup(bot):
     check_folders()
     check_files()
     n = Misc(bot)
+    bot.add_listener(n.on_message, "on_message")
     bot.add_cog(n)

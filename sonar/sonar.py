@@ -29,6 +29,7 @@ CHANNELS = {"message_add": "Diffuse à chaque message posté",
             "member_update_status": "Diffuse lorsqu'un membre change son statut (jeu ou personnalisé)",
             "app_nooknet_navet_lowest": "Diffuse lorsqu'un membre a rentré la valeur du navet la plus basse de la période (dimanche seulement)",
             "app_nooknet_navet_highest": "Diffuse lorsqu'un membre a rentré la valeur du navet la plus haute de la période",
+            "app_autoattrib": "Diffuse lorsqu'un membre obtient automatiquement un rôle auto-attribuable en mentionnant un modérateur",
             "warning_low": "Diffuse des avertissements de basse priorité",
             "warning_high": "Diffuse des avertissements de haute priorité"}
 
