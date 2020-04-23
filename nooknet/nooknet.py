@@ -312,10 +312,10 @@ class Nooknet:
                 for v in liste:
                     try:
                         user = ctx.message.server.get_member(v[0])
-                        user = user.mention
                         ilename = self.get_member(user)["island_name"] if self.get_member(user)["island_name"] else ""
+                        user = user.mention
                     except:
-                        user = "@" + self.bot.get_user_info(v[0]).name
+                        user = "@" + self.bot.get_user_info(v[0])["name"]
                         ilename = ""
                     if len(txt) < 1950:
                         txt += "`{}` — {}{}\n".format(v[1], user, ilename)
