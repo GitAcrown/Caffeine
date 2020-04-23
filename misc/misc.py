@@ -281,11 +281,8 @@ class Misc:
                     if self.get_setting(message.server, "iam_roles", []):
                         rolelist = self.get_setting(message.server, "iam_roles", [])
                         if message.mentions:
-                            modo = False
-                            for mention in message.mentions:
-                                if mention.server_permissions.manage_roles:
-                                    modo = True
-                            if modo:
+                            mention = message.mentions[0]
+                            if mention.server_permissions.manage_roles:
                                 detected = self.detect_roles_in_msg(message.server, message.content, 3)
                                 notif = []
                                 if detected:
