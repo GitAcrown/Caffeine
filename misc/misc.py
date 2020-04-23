@@ -302,6 +302,7 @@ class Misc:
                                                             await api.publish_log(user.server, "app_autoattrib",
                                                                                   em)
                                                             notif.append(g.id)
+                                                    return
                                             except:
                                                 pass
 
