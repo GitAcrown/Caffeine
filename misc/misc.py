@@ -274,14 +274,18 @@ class Misc:
 
     async def on_message(self, message):
         if message.server:
-            user = message.author
-            api = self.bot.get_cog("Sonar").api
-            if self.get_setting(message.server, "iam_auto", False):
-                if self.get_setting(message.server, "iam_roles", []):
-                    rolelist = self.get_setting(message.server, "iam_roles", [])
-                    if message.mentions:
-                        for mention in message.mentions:
-                            if mention.server_permissions.manage_roles:
+            if not message.author.bot:
+                user = message.author
+                api = self.bot.get_cog("Sonar").api
+                if self.get_setting(message.server, "iam_auto", False):
+                    if self.get_setting(message.server, "iam_roles", []):
+                        rolelist = self.get_setting(message.server, "iam_roles", [])
+                        if message.mentions:
+                            modo = False
+                            for mention in message.mentions:
+                                if mention.server_permissions.manage_roles:
+                                    modo = True
+                            if modo:
                                 detected = self.detect_roles_in_msg(message.server, message.content, 3)
                                 notif = []
                                 if detected:
@@ -302,7 +306,6 @@ class Misc:
                                                             await api.publish_log(user.server, "app_autoattrib",
                                                                                   em)
                                                             notif.append(g.id)
-                                                    return
                                             except:
                                                 pass
 
