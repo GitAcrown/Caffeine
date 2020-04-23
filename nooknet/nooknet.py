@@ -313,6 +313,7 @@ class Nooknet:
                     try:
                         user = ctx.message.server.get_member(v[0])
                         ilename = self.get_member(user)["island_name"] if self.get_member(user)["island_name"] else ""
+                        ilename = " sur ***{}***".format(ilename)
                         user = user.mention
                     except:
                         user = "@" + self.bot.get_user_info(v[0])["name"]
