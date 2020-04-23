@@ -57,20 +57,31 @@ class Misc:
 
     def guess_role(self, server, guess, max_tol: int = 0):
         roles = [r for r in server.roles if r.name != "@everyone"]
-        auto_tol = False if max_tol else True
         if roles:
             guess = self.normalize(guess.lower())
             gl = []
             for r in roles:
                 name = self.normalize(r.name.lower())
-                if len(r.name) < max_tol and auto_tol:
-                    max_tol = len(r.name) - 1
-                if self.leven(guess, name) <= max_tol:
+                if max_tol:
+                    if self.leven(guess, name) <= max_tol:
+                        gl.append([self.leven(guess, name), r])
+                else:
                     gl.append([self.leven(guess, name), r])
             if gl:
                 sgl = sorted(gl, key=operator.itemgetter(0))
                 if sgl[0]:
                     return sgl[0][1]
+        return None
+
+    def detect_roles_in_msg(self, server, msg, max_tol: int = 0):
+        roles = [r for r in server.roles if r.name != "@everyone"]
+        if roles:
+            rlist = []
+            for w in msg.split(" "):
+                guess = self.guess_role(server, w, max_tol)
+                if guess:
+                    rlist.append(guess)
+            return rlist
         return None
 
 
@@ -242,17 +253,21 @@ class Misc:
         Attention, cette commande ignore les rôles configurés pour 'iam', elle pioche dans tous les rôles du serveur sans exception"""
         server = ctx.message.server
         guess = self.guess_role(server, role)
-        if self.leven(self.normalize(guess.name.lower()), self.normalize(role.lower())) <= len(guess.name) - 1:
-            try:
-                if guess in user.roles:
-                    await self.bot.remove_roles(user, guess)
-                    await self.bot.say("**Rôle `{}` retiré** ─ Ce rôle a été détecté et retiré à {}".format(guess.name, user.name))
-                else:
-                    await self.bot.add_roles(user, guess)
-                    await self.bot.say(
-                        "**Rôle `{}` attribué** ─ Ce rôle a été détecté et attribué à {}".format(guess.name, user.name))
-            except:
-                await self.bot.say("**Opération refusée** ─ J'ai détecté le rôle `{}` mais impossible de le donner/retirer pour ce membre".format(guess.name))
+        if guess:
+            if self.leven(self.normalize(guess.name.lower()), self.normalize(role.lower())) <= len(guess.name) - 1:
+                try:
+                    if guess in user.roles:
+                        await self.bot.remove_roles(user, guess)
+                        await self.bot.say("**Rôle `{}` retiré** ─ Ce rôle a été détecté et retiré à {}".format(guess.name, user.name))
+                    else:
+                        await self.bot.add_roles(user, guess)
+                        await self.bot.say(
+                            "**Rôle `{}` attribué** ─ Ce rôle a été détecté et attribué à {}".format(guess.name, user.name))
+                except:
+                    await self.bot.say("**Opération refusée** ─ J'ai détecté le rôle `{}` mais impossible de le donner/retirer pour ce membre".format(guess.name))
+            else:
+                await self.bot.say(
+                    "**Rôle inconnu/trop éloigné** ─ J'ai peut-être trouvé le rôle demandé, mais par mesure de sécurité (car trop éloigné de son nom réel) l'opération n'est pas réalisée.")
         else:
             await self.bot.say("**Rôle inconnu/trop éloigné** ─ J'ai peut-être trouvé le rôle demandé, mais par mesure de sécurité (car trop éloigné de son nom réel) l'opération n'est pas réalisée.")
 
@@ -267,12 +282,7 @@ class Misc:
                     if message.mentions:
                         for mention in message.mentions:
                             if mention.server_permissions.manage_roles:
-                                detected = []
-                                for w in message.content:
-                                    guess = self.guess_role(message.server, w, 3)
-                                    if guess:
-                                        detected.append(guess)
-
+                                detected = self.detect_roles_in_msg(message.server, message.content, 3)
                                 if detected:
                                     print(detected)
                                     for g in detected:
