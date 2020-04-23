@@ -65,7 +65,8 @@ class Misc:
                 name = self.normalize(r.name.lower())
                 if len(r.name) < max_tol and auto_tol:
                     max_tol = len(r.name) - 1
-                gl.append([self.leven(guess, name), r])
+                if self.leven(guess, name) <= max_tol:
+                    gl.append([self.leven(guess, name), r])
             if gl:
                 sgl = sorted(gl, key=operator.itemgetter(0))
                 if sgl[0]:
