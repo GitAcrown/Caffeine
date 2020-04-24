@@ -273,6 +273,11 @@ class Misc:
         else:
             await self.bot.say("**Rôle inconnu/trop éloigné** ─ J'ai peut-être trouvé le rôle demandé, mais par mesure de sécurité (car trop éloigné de son nom réel) l'opération n'est pas réalisée.")
 
+    def redux(self, string: str, separateur: str = ".", limite: int = 2000):
+        n = -1
+        while len(separateur.join(string.split(separateur)[:n])) >= limite:
+            n -= 1
+        return separateur.join(string.split(separateur)[:n]) + separateur
 
     def wiki(self, recherche: str, langue: str = 'fr', souple: bool = True):
         wikipedia.set_lang(langue)
@@ -297,7 +302,7 @@ class Misc:
                     resum = self.redux(resum, limite=1960)
                 p = wikiplus.page(r)
                 resum += "\n\n[En savoir plus...]({})".format(p.fullurl)
-                em = discord.Embed(title=r.title(), description=resum, color=0xeeeeee)
+                em = discord.Embed(title=r.capitalize(), description=resum, color=0xeeeeee)
                 em.set_thumbnail(url=image)
                 em.set_footer(text="Similaire: {}".format(", ".join(s[0])))
                 return em
@@ -330,6 +335,7 @@ class Misc:
     async def wiki_search(self, ctx, *search):
         """Recherche sur Wikipedia (FR si dispo. sinon EN)"""
         search = " ".join(search)
+        await self.bot.send_typing(ctx.message.channel)
         result = self.wiki(search)
         if result:
             if type(result) is str:
