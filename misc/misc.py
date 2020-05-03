@@ -273,6 +273,30 @@ class Misc:
         else:
             await self.bot.say("**Rôle inconnu/trop éloigné** ─ J'ai peut-être trouvé le rôle demandé, mais par mesure de sécurité (car trop éloigné de son nom réel) l'opération n'est pas réalisée.")
 
+    @commands.command(pass_context=True)
+    async def allavatars(self, ctx, role: discord.Role):
+        """Ecrit dans un fichier txt les avatars de toutes les personnes possédant le(s) rôle(s) défini(s)"""
+        server = ctx.message.server
+        if role in server.roles:
+            txt = ""
+            for u in server.members:
+                if role in u.roles:
+                    if u.avatar_url:
+                        txt += "{}\t{}\n".format(str(u), u.avatar_url)
+            if txt:
+                filename = "AVATARS_{}.txt".format(role.name.upper())
+                file = open("data/misc/temp/{}".format(filename), "w", encoding="UTF-8")
+                file.write(txt)
+                file.close()
+                try:
+                    await self.bot.send_file(ctx.message.channel, "data/misc/temp/{}".format(filename))
+                    os.remove("data/misc/temp/{}".format(filename))
+                except Exception as e:
+                    await self.bot.say("**Impossible d'upload le fichier TXT des avatars** — `{}`".format(e))
+        else:
+            await self.bot.say("Rôle non reconnu sur ce serveur")
+
+
     def redux(self, string: str, separateur: str = ".", limite: int = 2000):
         n = -1
         while len(separateur.join(string.split(separateur)[:n])) >= limite:
@@ -384,6 +408,10 @@ def check_folders():
     if not os.path.exists("data/misc"):
         print("Création du dossier MISC...")
         os.makedirs("data/misc")
+
+    if not os.path.exists("data/misc/temp"):
+        print("Création du dossier MISC/temp...")
+        os.makedirs("data/misc/temp")
 
 
 def check_files():
