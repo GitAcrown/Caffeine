@@ -11,27 +11,28 @@ from discord.ext import commands
 
 from .utils import checks
 
-CHANNELS = {"message_add": "Diffuse à chaque message posté",
-            "message_delete": "Diffuse à chaque message supprimé",
-            "message_edit": "Diffuse lors de l'édition d'un message",
-            "voice_join": "Diffuse lorsqu'un membre rejoint un salon vocal",
-            "voice_quit": "Diffuse lorsqu'un membre quitte un salon vocal",
-            "voice_update": "Diffuse lorsqu'un membre change de salon vocal",
-            "voice_mute": "Diffuse lorsqu'un membre est mute/demute",
-            "voice_deaf": "Diffuse lorsqu'un membre est rendu sourd ou non",
-            "member_join": "Diffuse lorsqu'un membre rejoint le serveur",
-            "member_quit": "Diffuse lorsqu'un membre quitte le serveur (de lui-même ou via un kick)",
-            "member_ban": "Diffuse lorsqu'un membre est banni",
-            "member_unban": "Diffuse lorsqu'un membre est débanni",
-            "member_update_name": "Diffuse lorsqu'un membre change son pseudo",
-            "member_update_nickname": "Diffuse lorsqu'un membre change son surnom (nom visible)",
-            "member_update_avatar": "Diffuse lorsqu'un membre change son avatar",
-            "member_update_status": "Diffuse lorsqu'un membre change son statut (jeu ou personnalisé)",
-            "app_nooknet_navet_lowest": "Diffuse lorsqu'un membre a rentré la valeur du navet la plus basse de la période (dimanche seulement)",
-            "app_nooknet_navet_highest": "Diffuse lorsqu'un membre a rentré la valeur du navet la plus haute de la période",
-            "app_autoattrib": "Diffuse lorsqu'un membre obtient automatiquement un rôle auto-attribuable en mentionnant un modérateur",
-            "warning_low": "Diffuse des avertissements de basse priorité",
-            "warning_high": "Diffuse des avertissements de haute priorité"}
+CHANNELS = {"message_add": "Logs des messages postés",
+            "message_delete": "Logs des messages supprimés",
+            "message_edit": "Logs des éditions de messages",
+            "voice_join": "Logs des membres rejoignant un salon vocal",
+            "voice_quit": "Logs des membres quittant un salon vocal",
+            "voice_update": "Logs des changements de salons vocaux",
+            "voice_mute": "Logs des mute/demute",
+            "voice_deaf": "Logs des sourds/non-sourds",
+            "member_join": "Logs des membres rejoignant le serveur",
+            "member_quit": "Logs des membres quittant le serveur (de lui-même ou via un kick)",
+            "member_ban": "Logs des bannis",
+            "member_unban": "Logs des débannis",
+            "member_update_name": "Logs des changements de pseudos",
+            "member_update_nickname": "Logs des changements de surnoms (nom visible)",
+            "member_update_avatar": "Logs du changement d'avatar",
+            "member_update_status": "Logs des changements de statuts de jeu",
+            "app_nooknet_navet_lowest": "Logs de la valeur minimale du navet sur une période (dimanche seulement)",
+            "app_nooknet_navet_highest": "Logs de la valeur maximale du navet sur une période",
+            "app_autoattrib": "Logs des auto-attributions de rôles avec 'iam'",
+            "app_cash_bank": "Logs des mouvements de crédits de la banque avec les commandes de modérateur",
+            "warning_low": "Avertissements de basse priorité",
+            "warning_high": "Avertissements de haute priorité"}
 
 
 class SonarAPI:
@@ -192,9 +193,14 @@ class Sonar:
     async def info(self, ctx):
         """Affiche la description des différents canaux de logs"""
         desc = ""
+        spec = ""
         for e in CHANNELS:
-            desc += "`{}` • *{}*\n".format(e, CHANNELS[e])
+            if e.startswith("app"):
+                spec += "`{}` • *{}*\n".format(e, CHANNELS[e])
+            else:
+                desc += "`{}` • *{}*\n".format(e, CHANNELS[e])
         em = discord.Embed(title="Canaux de logs disponibles", description=desc, color=0xf4f7f7)
+        em.add_field(name="Apps spécifiques", value=spec)
         em.set_footer(text="Attribuez des canaux à des salons avec ;logs assign et ;logs unassign")
         await self.bot.say(embed=em)
 
