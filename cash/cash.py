@@ -1062,13 +1062,13 @@ class Cash:
 
         Par def. 100"""
         cur = self.api.get_currency(ctx.message.server)
-        if val > 0:
+        if 500 > val > 0:
             self.api.get_server(ctx.message.server, "sys")["bank"]["base_revenus"] = val
             self.api.save(True)
             await self.bot.say("**Revenu de base modifié** ─ Les membres pourront prétendre quotidiennement à {}".format(cur.tformat(val)))
         else:
             await self.bot.say(
-                "**Valeur invalide** ─ Le revenu ne peut être qu'un chiffre positif")
+                "**Valeur invalide** ─ Le revenu ne peut être qu'un chiffre positif inférieur à 500.")
 
     @_bankset.command(pass_context=True, hidden=True)
     async def regulation(self, ctx, prc: int):
