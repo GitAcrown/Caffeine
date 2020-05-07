@@ -305,8 +305,8 @@ class CashAPI:
 
 
     def get_operation(self, server, opid: str):
-        for user in self.data[server]["USERS"]:
-            if opid in self.data[server]["USERS"][user]["logs"]:
+        for user in self.data[server.id]["USERS"]:
+            if opid in self.data[server.id]["USERS"][user]["logs"]:
                 try:
                     user = server.get_member(user)
                 except:
@@ -820,6 +820,7 @@ class Cash:
             txt += "**= {}**".format(cur.tformat(total))
             self.api.save()
 
+            self.api.add_credits(user, total, "Revenus", ["revenus"])
             em = discord.Embed(description=txt, color=user.color, timestamp=ctx.message.timestamp)
             em.set_author(name="Revenus", icon_url=user.avatar_url)
             em.set_footer(text="Nouveau solde = {}".format(cur.sformat(data.solde)))
