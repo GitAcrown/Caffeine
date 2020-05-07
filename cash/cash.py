@@ -346,7 +346,6 @@ class CashAPI:
                   "tags": tags,
                   "links": []}
             data.raw["logs"][opid] = op
-            print("Opération {} enregistrée".format(opid))
             self.save()
             return CashOperation(data, opid)
         return None

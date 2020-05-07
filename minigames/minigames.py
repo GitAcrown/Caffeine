@@ -128,11 +128,11 @@ class Minigames:
                         gain = offre - base
                         cash.add_credits(user, gain, "Gain à la machine à sous", ["slot"])
                         em = discord.Embed(title="Machine à sous ─ {}".format(user.name), description=disp,
-                                           color=0xd4af37)
+                                           color=0x49d295)
                     else:
                         cash.remove_credits(user, base, "Perte à la machine à sous", ["slot"])
                         em = discord.Embed(title="Machine à sous ─ {}".format(user.name), description=disp,
-                                           color=0xd4af37)
+                                           color=0xd24957)
                     em.set_footer(text=gaintxt.format(cur.sformat(offre)))
                     await self.bot.delete_message(msg)
                     await self.bot.say(embed=em)
