@@ -130,7 +130,7 @@ class Minigames:
                         em = discord.Embed(title="Machine à sous ─ {}".format(user.name), description=disp,
                                            color=0xd4af37)
                     else:
-                        cash.remove_credits(user, base, "Perte à la machine à sous", False, ["slot"])
+                        cash.remove_credits(user, base, "Perte à la machine à sous", ["slot"])
                         em = discord.Embed(title="Machine à sous ─ {}".format(user.name), description=disp,
                                            color=0xd4af37)
                     em.set_footer(text=gaintxt.format(cur.sformat(offre)))

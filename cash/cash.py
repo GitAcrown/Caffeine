@@ -798,23 +798,23 @@ class Cash:
                 total += base
                 if data.raw["cache"]["last_pay"] == (datetime.now() - timedelta(days=1)).strftime("%d.%m.%Y"):
                     cons_bonus = round(base * 0.2)
-                    txt += "+ {} » Bonus de jours consécutifs (20% BJ)".format(cur.sformat(base))
+                    txt += "+ {} » Bonus de jours consécutifs (20% BJ)\n".format(cur.sformat(base))
                     total += cons_bonus
                 data.raw["cache"]["last_pay"] = datetime.now().strftime("%d.%m.%Y")
 
                 taxe = bank["base_taxe"]
                 taxe_malus = round(total * (taxe/100))
                 total -= taxe_malus
-                txt += "- {} » Taxe de ***{}*** ({}%)".format(cur.sformat(taxe_malus), bank["name"], taxe)
+                txt += "- {} » Taxe de ***{}*** ({}%)\n".format(cur.sformat(taxe_malus), bank["name"], taxe)
                 self.api.server_add_credits(server, taxe_malus)
             else:
-                txt += "• 0 » Base journalière déjà perçue"
+                txt += "• 0 » Base journalière déjà perçue\n"
 
             if data.raw["cache"]["msg_pay"]["date"] == datetime.now().strftime("%d.%m.%Y"):
                 msg_bonus = round(data.raw["cache"]["msg_pay"]["nb"] * (base * 0.02))
                 data.raw["cache"]["msg_pay"]["nb"] = 0
                 total += msg_bonus
-                txt += "+ {} » Revenu d'activité (2% BJ/pt)"
+                txt += "+ {} » Revenu d'activité (2% BJ/pt)\n".format(cur.sformat(msg_bonus))
             txt += "───────\n"
             txt += "**= {}**".format(cur.tformat(total))
             self.api.save()
@@ -832,13 +832,13 @@ class Cash:
         cur = self.api.get_currency(server)
         em = discord.Embed(color=0xd4af37, timestamp=ctx.message.timestamp)
         em.set_author(name=str(sys["bank"]["name"]), icon_url=server.icon_url)
-        em.add_field(name="Réserves", value=str(sys["bank"]["reserves"]))
-        em.add_field(name="Total en circulation", value=cur.stocks)
+        em.add_field(name="Réserves", value=str(sys["bank"]["reserves"]) + cur.symbole)
+        em.add_field(name="Total en circulation", value=cur.stocks + cur.symbole)
         resume = "**Nom**: {}/{}\n".format(cur.singulier, cur.pluriel)
         resume += "**Symbole**: {}\n".format(cur.symbole)
         resume += "**Code devise**: {}".format(cur.code)
         em.add_field(name="Monnaie", value=resume)
-        em.add_field(name="Base de taxe", value=sys["bank"]["base_taxe"])
+        em.add_field(name="Base de taxe", value=str(sys["bank"]["base_taxe"]) + "%")
         await self.bot.say(embed=em)
 
     @commands.group(name="cashset", aliases=["cs"], pass_context=True, no_pm=True)
