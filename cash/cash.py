@@ -824,6 +824,22 @@ class Cash:
             em.set_footer(text="Nouveau solde = {}".format(cur.sformat(data.solde)))
             await self.bot.say(embed=em)
 
+    @commands.command(pass_context=True, no_pm=True, aliases=["reserves"])
+    async def banque(self, ctx):
+        """Consulter l'état économique du serveur"""
+        server = ctx.message.server
+        sys = self.api.get_server(server, "sys")
+        cur = self.api.get_currency(server)
+        em = discord.Embed(color=0xd4af37, timestamp=ctx.message.timestamp)
+        em.set_author(name=str(sys["bank"]["name"]), icon_url=server.icon_url)
+        em.add_field(name="Réserves", value=str(sys["bank"]["reserves"]))
+        em.add_field(name="Total en circulation", value=cur.stocks)
+        resume = "**Nom**: {}/{}\n".format(cur.singulier, cur.pluriel)
+        resume += "**Symbole**: {}\n".format(cur.symbole)
+        resume += "**Code devise**: {}".format(cur.code)
+        em.add_field(name="Monnaie", value=resume)
+        em.add_field(name="Base de taxe", value=sys["bank"]["base_taxe"])
+        await self.bot.say(embed=em)
 
     @commands.group(name="cashset", aliases=["cs"], pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_messages=True)

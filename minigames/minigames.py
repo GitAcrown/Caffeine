@@ -126,11 +126,11 @@ class Minigames:
                         await asyncio.sleep(0.4)
                     if offre > 0:
                         gain = offre - base
-                        cash.add_credits(user, gain, "Gain à la machine à sous", "slot")
+                        cash.add_credits(user, gain, "Gain à la machine à sous", ["slot"])
                         em = discord.Embed(title="Machine à sous ─ {}".format(user.name), description=disp,
                                            color=0xd4af37)
                     else:
-                        cash.remove_credits(user, base, "Perte à la machine à sous", False, "slot")
+                        cash.remove_credits(user, base, "Perte à la machine à sous", False, ["slot"])
                         em = discord.Embed(title="Machine à sous ─ {}".format(user.name), description=disp,
                                            color=0xd4af37)
                     em.set_footer(text=gaintxt.format(cur.sformat(offre)))
