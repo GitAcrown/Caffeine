@@ -304,13 +304,17 @@ class Sonar:
 
     async def on_msg_delete(self, message):
         if message.server:
-            if message.author != self.bot.user:
-                if self.api.preload_channel(message.server, "message_delete"):
-                    em = discord.Embed(description=message.content, timestamp=message.timestamp,
-                                       color=0xE46464)  # Rouge pastel
-                    em.set_author(name=str(message.author) + " ─ Message supprimé", icon_url=message.author.avatar_url)
-                    em.set_footer(text="Auteur ID: {} • Salon: #{}".format(message.author.id, message.channel.name))
-                    await self.api.publish_log(message.server, "message_delete", em)
+            if message.author:
+                if message.author != self.bot.user:
+                    if self.api.preload_channel(message.server, "message_delete"):
+                        em = discord.Embed(description=message.content, timestamp=message.timestamp,
+                                           color=0xE46464)  # Rouge pastel
+                        em.set_author(name=str(message.author) + " ─ Message supprimé", icon_url=message.author.avatar_url)
+                        em.set_footer(text="Auteur ID: {} • Salon: #{}".format(message.author.id, message.channel.name))
+                        await self.api.publish_log(message.server, "message_delete", em)
+            else:
+                print("{}: Msg ID={} supprimé sur #{} (auteur inconnu)".format(datetime.strftime("%d.%m.%Y %H:%M:%S"), message.id,
+                                                              message.channel.name))
 
     async def on_msg_edit(self, before, after):
         if after.server:
