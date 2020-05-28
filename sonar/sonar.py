@@ -181,6 +181,21 @@ class Sonar:
         except Exception as e:
             await self.bot.say("**Impossible d'upload le résultat du scan** — `{}`".format(e))
 
+    @commands.command(pass_context=True)
+    async def trigdate(self, ctx, max_scan: int, start: str):
+        """Recherche la date des msg dont l'ID commence avec <start> dans n=<max_scan> messages."""
+        channel = ctx.message.channel
+        await self.bot.say("🔍 **Triangulation en cours** — Recherche de la date des messages dont l'identifiant commence par `{}` (sur n={})".format(start, max_scan))
+        async for msg in self.bot.logs_from(channel, limit=max_scan):
+            try:
+                if str(msg.id).startswith(start):
+                    if msg.timestamp:
+                        await self.bot.say("🔍 **Triangulation terminée** — Les messages dont l'ID commencent avec `{}` datent environ du ***{}***".format(start, msg.timestamp.strftime("%d/%m/%Y %H:%M")))
+                        return
+            except:
+                pass
+        await self.bot.say("🔍 **Triangulation échouée** — Je n'ai rien trouvé de correspondant. Essayez un scan avec un nombre plus elevé de messages.")
+
 
     @commands.group(name="logs", aliases=["sonar"], pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_messages=True)
@@ -313,7 +328,7 @@ class Sonar:
                         em.set_footer(text="Auteur ID: {} • Salon: #{}".format(message.author.id, message.channel.name))
                         await self.api.publish_log(message.server, "message_delete", em)
             else:
-                print("{}: Msg ID={} supprimé sur #{} (auteur inconnu)".format(datetime.strftime("%d.%m.%Y %H:%M:%S"), message.id,
+                print("{}: Msg ID={} supprimé sur #{} (auteur inconnu)".format(message.timestamp.strftime("%d.%m.%Y %H:%M:%S"), message.id,
                                                               message.channel.name))
 
     async def on_msg_edit(self, before, after):
