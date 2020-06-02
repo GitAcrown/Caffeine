@@ -390,6 +390,7 @@ class CashAPI:
             return sum([op.delta for op in ops])
         return 0
 
+
     def enough_credits(self, user: discord.Member, sum: int):
         data = self.get_account(user)
         if data:
@@ -431,6 +432,7 @@ class CashAPI:
                     self.link_operations(creancier.server, [don.opid, recu.opid])
                     return (don, recu)
         return None
+
 
     def get_currency(self, server):
         return CashCurrency(self, server)
