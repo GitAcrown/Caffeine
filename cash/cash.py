@@ -733,7 +733,7 @@ class Cash:
                     n += 1
             em = discord.Embed(title="Top des plus riches du serveur", description=txt,
                                timestamp=ctx.message.timestamp, color=0xd4af37)
-            em.add_field(name="Votre position", value=str(self.api.top_find(ctx.message.author)))
+            em.add_field(name="Votre position", value=str(self.api.top_find(ctx.message.author)) + "e")
             total = self.api.total_credits_on(server)
             members = self.api.total_accounts_on(server)
             em.set_footer(text="{}/{} comptes".format(cur.sformat(total), members))
