@@ -829,7 +829,7 @@ class Cash:
 
     @_cashset.command(pass_context=True)
     async def set(self, ctx, user: discord.Member, operation: str, *raison):
-        """Modifie le solde d'un membre (+/-/=) avec les réserves du serveur
+        """Modifie le solde d'un membre (+/-/=)
 
         Exemples :
         ;cs set @Acrone 42 -> Change le solde pour 42
