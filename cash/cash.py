@@ -128,18 +128,18 @@ class CashCurrency:
     def stocks(self):
         users = self.cog.get_server(self.server, "users")
         total = sum(users[u]["solde"] for u in users)
-        total += self.cog.get_server(self.server, "sys")["bank"]["reserves"]
         return total
 
 
 class CashAPI:
-    """API de Cash"""
+    """API de Cash - Economie virtuelle sur Atom"""
 
     def __init__(self, bot, path):
         self.bot = bot
         self.data = dataIO.load_json(path)
         self.cooldown = {}
         self.autosave = 0
+        self.import_from_wallet()
 
     def save(self, force: bool = False):
         if (time.time() - self.autosave) > 10 or force:
@@ -149,61 +149,57 @@ class CashAPI:
     def ping(self):
         return datetime.now()
 
+    def import_from_wallet(self, force: bool = False):
+        """Réimporte les informations à partir de Wallet"""
+        try:
+            pay = dataIO.load_json("data/wallet/data.json")
+            for serv in pay:
+                if serv not in self.data or force:
+                    server = self.bot.get_server(serv)
+                    self.data[server.id] = {"USERS": {},
+                                            "SYS": {"bank": {"name": "Banque {}".format(server.name),
+                                                             "base_rj": 200},
+                                                    "currency": {"code": server.name[:3].upper(),
+                                                                 "symbole": "α",
+                                                                 "singulier": "atom",
+                                                                 "pluriel": "atoms"},
+                                                    "online": False},
+                                            "CACHE": {}}
+                    for user in pay[serv]["USERS"]:
+                        data = pay[serv]["USERS"][user]
+                        self.data[server.id]["USERS"][user] = {"solde": data["solde"],
+                                                               "logs": {},
+                                                               "cache": {}}
+            self.save(True)
+            return True
+        except:
+            return False
+
 
     def get_server(self, server, sub: str = None, reset= False):
         if server.id not in self.data or reset:
             self.data[server.id] = {"USERS": {},
                                     "SYS": {"bank": {"name": "Banque {}".format(server.name),
-                                                     "reserves": 50 * len(server.members),
-                                                     "base_taxe": 5,
-                                                     "convert_regul": 2,
-                                                     "base_revenus": 100},
+                                                     "base_rj": 200},
                                             "currency": {"code": server.name[:3].upper(),
                                                          "symbole": "α",
                                                          "singulier": "atom",
                                                          "pluriel": "atoms"},
                                             "online": False},
-                                    "MEMORY": {}}
+                                    "CACHE": {}}
             self.save(True)
         return self.data[server.id][sub.upper()] if sub else self.data[server.id]
 
-    def total_credits_on(self, server, ignore_reserves: bool = False):
+    def total_credits_on(self, server):
+        """Renvoie tous les crédits en circulation sur un serveur"""
         if server.id in self.data:
             total = sum(
                 [self.data[server.id]["USERS"][user]["solde"] for user in self.data[server.id]["USERS"]])
-            if not ignore_reserves:
-                total += self.data[server.id]["SYS"]["bank"]["reserves"]
             return total
         return 0
 
-    def server_enough_credits(self, server, sum: int):
-        data = self.get_server(server, "sys")["bank"]
-        if data["reserves"] >= sum:
-            return True
-        else:
-            return False
-
-    def server_add_credits(self, server, sum: int):
-        data = self.get_server(server, "sys")["bank"]
-        sum = abs(int(sum))
-        if sum > 0:
-            data["reserves"] += sum
-            self.save()
-            return True
-        else:
-            return False
-
-    def server_remove_credits(self, server, sum: int):
-        data = self.get_server(server, "sys")["bank"]
-        sum = abs(int(sum))
-        if self.server_enough_credits(server, sum):
-            data["reserves"] -= sum
-            self.save()
-            return True
-        else:
-            return False
-
     def total_accounts_on(self, server):
+        """Renvoie le nb de comptes ouverts sur un serveur"""
         if server.id in self.data:
             return len(self.data[server.id]["USERS"])
         return 0
@@ -247,13 +243,14 @@ class CashAPI:
     def create_account(self, user: discord.member):
         users = self.get_server(user.server, "users")
         if user.id not in users:
-            users[user.id] = {"solde": 250,
+            users[user.id] = {"solde": self.get_server(user.server, "sys")["bank"]["base_rj"] * 3,
                               "logs": {},
                               "cache": {}}
             self.save(True)
         return CashAccount(self, user)
 
-    def get_all_accounts(self, server):
+    def get_all_accounts(self, server) -> [CashAccount]:
+        """Renvoie tous les comptes du serveur"""
         accounts = []
         data = self.get_server(server, "users")
         if data:
@@ -263,6 +260,7 @@ class CashAPI:
         return accounts
 
     async def login(self, user: discord.Member):
+        """Propose l'inscription à Cash, sinon renvoie le compte du membre"""
         server = user.server
         banque = self.get_server(server, "sys")["bank"]["name"]
         if not self.get_account(user):
@@ -325,7 +323,7 @@ class CashAPI:
                 else:
                     l.append((op.timestamp.timestamp(), op))
             ops_sorted = sorted(l, key=operator.itemgetter(0), reverse=True)
-            return [i[1] for i in ops_sorted]
+            return [i[1] for i in ops_sorted][:limit]
         return []
 
     def add_operation(self, user: discord.Member, delta: int, desc: str, tags: list= None):
@@ -392,7 +390,6 @@ class CashAPI:
             return sum([op.delta for op in ops])
         return 0
 
-
     def enough_credits(self, user: discord.Member, sum: int):
         data = self.get_account(user)
         if data:
@@ -435,7 +432,6 @@ class CashAPI:
                     return (don, recu)
         return None
 
-
     def get_currency(self, server):
         return CashCurrency(self, server)
 
@@ -446,94 +442,62 @@ class CashAPI:
             liste.append(CashCurrency(self, server))
         return liste
 
-    def compute_conversion_ratio(self, dsort: CashCurrency, dentre: CashCurrency):
-        return round(dentre.stocks / dsort.stocks, 4)
 
-    def convert_currencies(self, user: discord.Member, dcible: CashCurrency, somme: int):
-        if self.data[user.server.id] and self.data[dcible.server.id]:
-            if user.id in self.data[user.server.id]["USERS"] and user.id in self.data[dcible.server.id]["USERS"]:
-                if self.enough_credits(user, somme):
-                    cur = self.get_currency(user.server)
-                    taxe = self.get_server(user.server, "sys")["bank"]["base_taxe"]
-                    regul = self.get_server(dcible.server, "sys")["bank"]["convert_regul"]
-                    somme -= somme * (taxe / 100)
-                    os_user = dcible.server.get_member(user.id)
-                    new_somme = round(somme * self.compute_conversion_ratio(cur, dcible))
-                    if new_somme <= round(dcible.stocks * (regul/100)):
-                        if self.remove_credits(user, somme, "Conversion en {}".format(dcible.code), ["online", "convert"]):
-                            self.add_credits(os_user, new_somme, "Conversion depuis {}".format(cur.code), ["online", "convert"])
-                            self.save(True)
-                            return True
-        return False
-
-
-    def get_cooldown(self, user: discord.Member, name: str, raw: bool = False):
-        """Renvoie le cooldown du membre sur ce module s'il y en a un"""
+    def get_cooldown(self, user: discord.Member, cooldown_id: str):
         server = user.server
-        now = time.time()
+        cd = cooldown_id.lower()
+        now = lambda: time.time()
+        if server.id in self.cooldown:
+            if cd in self.cooldown[server.id]:
+                if user.id in self.cooldown[server.id][cd]:
+                    if now() < self.cooldown[server.id][cd][user.id]:
+                        return self.remaining(now(), self.cooldown[server.id][cd][user.id])
+                    else:
+                        del self.cooldown[server.id][cd][user.id]
+        return None
 
-        if server.id not in self.cooldown:
-            self.cooldown[server.id] = {}
-        if name.lower() not in self.cooldown[server.id]:
-            self.cooldown[server.id][name.lower()] = {}
-
-        if user.id in self.cooldown[server.id][name.lower()]:
-            if now <= self.cooldown[server.id][name.lower()][user.id]:
-                duree = int(self.cooldown[server.id][name.lower()][user.id] - now)
-                return self.timeformat(duree) if not raw else duree
-            else:
-                del self.cooldown[server.id][name.lower()][user.id]
-        return False
-
-    def add_cooldown(self, user: discord.Member, name: str, duree: int):
-        """Attribue un cooldown à un membre sur une action visée (en secondes)"""
+    def add_cooldown(self, user: discord.Member, cooldown_id: str, cooldown: int):
         server = user.server
-        fin = time.time() + duree
-
-        if server.id not in self.cooldown:
-            self.cooldown[server.id] = {}
-        if name.lower() not in self.cooldown[server.id]:
-            self.cooldown[server.id][name.lower()] = {}
-
-        if user.id in self.cooldown[server.id][name.lower()]:
-            self.cooldown[server.id][name.lower()][user.id] += duree
+        cd = cooldown_id.lower()
+        end = lambda c: time.time() + c
+        if server.id not in self.cooldown: self.cooldown[server.id] = {}
+        if cd not in self.cooldown[server.id]: self.cooldown[server.id][cd] = {}
+        if user.id in self.cooldown[server.id][cd]:
+            self.cooldown[server.id][cd][user.id] += cooldown
         else:
-            self.cooldown[server.id][name.lower()][user.id] = fin
-        return self.get_cooldown(user, name)
+            self.cooldown[server.id][cd][user.id] = end(cooldown)
+        return self.get_cooldown(user, cd)
 
-    def reset_cooldown(self, user: discord.Member, name: str):
-        """Remet un cooldown à 0"""
+    def reset_cooldown(self, user: discord.member, cooldown_id: str):
         server = user.server
+        cd = cooldown_id.lower()
+        if server.id in self.cooldown:
+            if cd in self.cooldown[server.id]:
+                if user.id in self.cooldown[server.id][cd]:
+                    del self.cooldown[server.id][cd][user.id]
+                    return True
+        return None
 
-        if server.id not in self.cooldown:
-            self.cooldown[server.id] = {}
-        if name.lower() not in self.cooldown[server.id]:
-            self.cooldown[server.id][name.lower()] = {}
 
-        if user.id in self.cooldown[server.id][name.lower()]:
-            del self.cooldown[server.id][name.lower()][user.id]
-            return True
-        return False
+    def remaining(self, t_from, t_to):
+        if t_to <= t_from:
+            return self.seconds_format(0)
+        return self.seconds_format(round(t_to - t_from))
 
-    def timeformat(self, val: int):
-        """Converti automatiquement les secondes en unités plus pratiques"""
-        j = h = m = 0
-        while val >= 60:
-            m += 1
-            val -= 60
-            if m == 60:
-                h += 1
-                m = 0
-                if h == 24:
-                    j += 1
-                    h = 0
-        txt = ""
-        if j: txt += str(j) + "J "
-        if h: txt += str(h) + "h "
-        if m: txt += str(m) + "m "
-        if val > 0: txt += str(val) + "s"
-        TimeConv = namedtuple('TimeConv', ['jours', 'heures', 'minutes', 'secondes', 'string'])
-        return TimeConv(j, h, m, val, txt if txt else "< 1s")
+    def seconds_format(self, seconds: int):
+        j = 0
+        while seconds >= 86400:
+            j += 1
+            seconds -= 86400
+        h, m, s = [int(n) for n in str(timedelta(seconds=seconds)).split(":")]
+        all = []
+        if j: all.append(str(j) + "J")
+        if h: all.append(str(h) + "h")
+        if m: all.append(str(m) + "m")
+        if s: all.append(str(s) + "s")
+        auto = "`" + " · ".join(all) + "`"
+        SecFormat = namedtuple('SecFormat', ['days', 'hours', 'minutes', 'seconds', 'auto'])
+        return SecFormat(j, h, m, s, auto)
 
 
     def reset_account(self, user: discord.Member):
@@ -565,6 +529,7 @@ class CashAPI:
         self.data = {}
         self.save(True)
         return True
+
 
 class Cash:
     """Economie virtuelle"""
@@ -608,16 +573,17 @@ class Cash:
                 cur = self.api.get_currency(user.server)
                 data = self.api.get_account(user)
                 total = self.api.total_delta_for(user)
+                delta_emoji = "📉" if total < 0 else "📈"
                 total = "+{}".format(total) if total >= 0 else "{}".format(total)
                 top = self.api.top_find(user) if self.api.top_find(user) else "Ø"
 
-                txt = "\💵 **Solde** ─ {}\n".format(cur.tformat(data.solde))
-                txt += "\💱 **Aujourd'hui** ─ {}\n".format(total)
-                txt += "\🏅 **Classement** ─ #{}\n".format(top)
+                txt = "💰 **Solde** ─ {}\n".format(cur.tformat(data.solde))
+                txt += "{} **Aujourd'hui** ─ {}\n".format(delta_emoji, total)
+                txt += "🏆 **Classé #{}**\n".format(top)
 
                 name = user.name if not same else "Votre compte"
                 em = discord.Embed(title=name, description=txt, color=user.color, timestamp=ctx.message.timestamp)
-                em.set_thumbnail(url= user.avatar_url)
+                em.set_thumbnail(url=user.avatar_url)
 
                 ops = self.api.get_all_operations(user, 5)
                 if ops:
@@ -638,7 +604,7 @@ class Cash:
 
     @cash_account.command(name="logs", pass_context=True)
     async def cash_logs(self, ctx, user: discord.Member = None, *tags):
-        """Recherche les dernières opérations d'un membre"""
+        """Recherche les dernières opérations bancaires d'un membre"""
         user = user if user else ctx.message.author
         data = self.api.get_account(user)
         if data:
@@ -678,7 +644,7 @@ class Cash:
 
     @cash_account.command(name="get", pass_context=True)
     async def cash_get(self, ctx, operation_id: str):
-        """Consulter les détails d'une opération"""
+        """Consulter les détails d'une opération sur ce serveur"""
         server = ctx.message.server
         if len(operation_id) == 4:
             operation_id = "$" + operation_id
@@ -699,12 +665,12 @@ class Cash:
                                color=op.account.user.color, timestamp=op.timestamp)
             await self.bot.say(embed=em)
         else:
-            await self.bot.say("**Identifiant inconnu** ─ Vérifiez que l'identifiant fasse 5 caractères, avec en premier un symbole dollar ($)")
-
+            await self.bot.say(
+                "**Identifiant inconnu** ─ Vérifiez que l'identifiant fasse 5 caractères, avec en premier un symbole dollar ($)")
 
     @commands.command(pass_context=True, no_pm=True)
     async def give(self, ctx, receveur: discord.Member, somme: int, *raison):
-        """Transférer de l'argent sur le compte d'un membre"""
+        """Transférer des crédits sur le compte d'autrui"""
         server = ctx.message.server
         donateur = ctx.message.author
         cur = self.api.get_currency(server)
@@ -727,17 +693,19 @@ class Cash:
                             await asyncio.sleep(0.5)
                             await self.bot.say("**Transfert impossible** ─ La banque a refusé ce transfert.")
                     else:
-                        await self.bot.say("**Fonds insuffisants** ─ Vous n'avez pas cette somme sur votre compte, soyez plus raisonnable.")
+                        await self.bot.say(
+                            "**Fonds insuffisants** ─ Vous n'avez pas cette somme sur votre compte, soyez plus raisonnable.")
                 else:
-                    await self.bot.say("**Compte inexistant** ─ Vous devez d'abord posséder un compte **Cash** sur ce serveur (`;cash new`)")
+                    await self.bot.say(
+                        "**Compte inexistant** ─ Vous devez d'abord posséder un compte **Cash** sur ce serveur (`;cash new`)")
             else:
-                await self.bot.say("**Aucun receveur** ─ Le receveur sélectionné ne possède pas de compte **Cash** sur ce serveur.")
+                await self.bot.say(
+                    "**Aucun receveur** ─ Le receveur sélectionné ne possède pas de compte **Cash** sur ce serveur.")
         else:
             await self.bot.say("**Somme invalide** ─ La somme donnée doit être positive.")
 
-
     @commands.command(pass_context=True, no_pm=True, aliases=["palmares"])
-    async def top(self, ctx, top:int = 10):
+    async def top(self, ctx, top: int = 10):
         """Affiche un top des membres les plus riches du serveur"""
         server = ctx.message.server
         author = ctx.message.author
@@ -766,7 +734,7 @@ class Cash:
             em = discord.Embed(title="Top des plus riches du serveur", description=txt,
                                timestamp=ctx.message.timestamp, color=0xd4af37)
             em.add_field(name="Votre position", value=str(self.api.top_find(ctx.message.author)))
-            total = self.api.total_credits_on(server, True)
+            total = self.api.total_credits_on(server)
             members = self.api.total_accounts_on(server)
             em.set_footer(text="{}/{} comptes".format(cur.sformat(total), members))
             try:
@@ -776,14 +744,14 @@ class Cash:
         else:
             await self.bot.say("**Serveur vide** ─ Aucun compte ***Cash*** n'est présent sur ce serveur.")
 
-
     @commands.command(pass_context=True, no_pm=True, aliases=["rj"])
     async def revenu(self, ctx):
         """Récupérer son revenu journalier"""
         user, server = ctx.message.author, ctx.message.server
         bank = self.api.get_server(server, "sys")["bank"]
-        base = bank["base_revenus"]
+        base = bank["base_rj"]
         cur = self.api.get_currency(server)
+
         if await self.api.login(user):
             data = self.api.get_account(user)
             if "last_pay" not in data.raw["cache"]:
@@ -793,6 +761,7 @@ class Cash:
                                                 "nb": 0}
             txt = ""
             total = 0
+
             if data.raw["cache"]["last_pay"] != datetime.now().strftime("%d.%m.%Y"):
                 txt += "**+ {}** » Base journalière\n".format(cur.sformat(base))
                 total += base
@@ -801,12 +770,6 @@ class Cash:
                     txt += "**+ {}** » Bonus de jours consécutifs (20% BJ)\n".format(cur.sformat(base))
                     total += cons_bonus
                 data.raw["cache"]["last_pay"] = datetime.now().strftime("%d.%m.%Y")
-
-                taxe = bank["base_taxe"]
-                taxe_malus = round(total * (taxe/100))
-                total -= taxe_malus
-                txt += "**- {}** » Taxe de ***{}*** ({}%)\n".format(cur.sformat(taxe_malus), bank["name"], taxe)
-                self.api.server_add_credits(server, taxe_malus)
             else:
                 txt += "**+ 0{}** » Base journalière déjà perçue\n".format(cur.symbole)
 
@@ -814,53 +777,23 @@ class Cash:
                 msg_bonus = round(data.raw["cache"]["msg_pay"]["nb"] * (base * 0.02))
                 data.raw["cache"]["msg_pay"]["nb"] = 0
                 total += msg_bonus
-                txt += "**+ {}** » Revenu d'activité (2% BJ/pt)\n".format(cur.sformat(msg_bonus))
+                txt += "**+ {}** » Revenu d'activité (2% BJ/point)\n".format(cur.sformat(msg_bonus))
             txt += "─────\n"
             txt += "**= {}**".format(cur.tformat(total))
-            self.api.save()
 
             self.api.add_credits(user, total, "Revenus", ["revenus"])
+            self.api.save()
             em = discord.Embed(description=txt, color=user.color, timestamp=ctx.message.timestamp)
             em.set_author(name="Revenus", icon_url=user.avatar_url)
             em.set_footer(text="Nouveau solde = {}".format(cur.sformat(data.solde)))
             await self.bot.say(embed=em)
 
-    @commands.command(pass_context=True, no_pm=True, aliases=["reserves"])
-    async def banque(self, ctx):
-        """Consulter l'état économique du serveur"""
-        server = ctx.message.server
-        sys = self.api.get_server(server, "sys")
-        cur = self.api.get_currency(server)
-        em = discord.Embed(color=0xd4af37, timestamp=ctx.message.timestamp)
-        em.set_author(name=str(sys["bank"]["name"]), icon_url=server.icon_url)
-        em.add_field(name="Réserves", value=str(sys["bank"]["reserves"]) + cur.symbole)
-        em.add_field(name="Total en circulation", value=str(cur.stocks) + cur.symbole)
-        resume = "**Nom**: {}/{}\n".format(cur.singulier, cur.pluriel)
-        resume += "**Symbole**: {}\n".format(cur.symbole)
-        resume += "**Code devise**: {}".format(cur.code)
-        em.add_field(name="Monnaie", value=resume)
-        em.add_field(name="Base de taxe", value=str(sys["bank"]["base_taxe"]) + "%")
-        await self.bot.say(embed=em)
-
     @commands.group(name="cashset", aliases=["cs"], pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_messages=True)
     async def _cashset(self, ctx):
-        """Commandes de gestion de la banque"""
+        """Commandes de gestion de l'économie"""
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
-
-    @_cashset.command(pass_context=True, hidden=True)
-    async def online(self, ctx):
-        """Active/désactive la participation du serveur aux fonctionnalités multi-serveurs tels que la conversion de devises"""
-        data = self.api.get_server(ctx.message.server, "sys")
-        if data["online"]:
-            data["online"] = False
-            await self.bot.say("**Online inactif** ─ Ce serveur n'est plus connecté au réseau économique des serveurs d'Atom")
-        else:
-            data["online"] = True
-            await self.bot.say(
-                "**Online actif** ─ Ce serveur est désormais connecté au réseau économique d'Atom")
-        self.api.save(True)
 
     @_cashset.command(pass_context=True)
     async def forcenew(self, ctx, user: discord.Member):
@@ -907,12 +840,14 @@ class Cash:
         cur = self.api.get_currency(server)
 
         sonar = self.bot.get_cog("Sonar").api
+
         async def sonar_log(desc):
             if sonar.preload_channel(user.server, "app_cash_bank"):
                 em = discord.Embed(
                     description=desc,
                     color=0xd4af37, timestamp=ctx.message.timestamp)  # doré
-                em.set_author(name="Mouvement de fonds de la réserve de {}".format(self.api.get_server(server, "sys")["bank"]["name"]),
+                em.set_author(name="Mouvement de fonds de {}".format(
+                    self.api.get_server(server, "sys")["bank"]["name"]),
                               icon_url=server.icon_url)
                 em.set_footer(text="Auteur ID: {}".format(ctx.message.author.id))
                 await sonar.publish_log(user.server, "app_cash_bank", em)
@@ -924,49 +859,40 @@ class Cash:
                 operation = int(operation)
                 if operation > self.api.get_account(user).solde:
                     delta = operation - self.api.get_account(user).solde
-                    if self.api.server_remove_credits(server, delta):
-                        self.api.set_credits(user, operation, raison, ["modif"])
-                        await self.bot.say("**Solde modifié** ─ Le solde du membre est désormais de {}".format(cur.sformat(self.api.get_account(user).solde)))
-                        await sonar_log("Déplacement de **{}** vers le compte de {}".format(cur.sformat(delta), user.mention))
-                    else:
-                        await self.bot.say("**Réserves du serveur insuffisantes** ─ La banque n'a pas assez de fonds pour cette opération.")
+                    self.api.set_credits(user, operation, raison, ["modif"])
+                    await self.bot.say("**Solde modifié** ─ Le solde du membre est désormais de {}".format(
+                        cur.sformat(self.api.get_account(user).solde)))
+                    await sonar_log(
+                        "Ajout de **{}** au compte de {}".format(cur.sformat(delta), user.mention))
                 else:
                     delta = self.api.get_account(user).solde - operation
                     if delta > 0:
-                        if self.api.server_add_credits(server, delta):
-                            self.api.set_credits(user, operation, raison, ["modif"])
-                            await sonar_log(
-                                "Récupération de **{}** du compte de {}".format(cur.sformat(delta), user.mention))
-                            await self.bot.say("**Solde modifié** ─ Le solde du membre est désormais de {}".format(
-                                cur.sformat(self.api.get_account(user).solde)))
-                        else:
-                            await self.bot.say(
-                                "**Opération impossible** ─ La banque a refusé cette opération pour une raison inconnue.")
+                        self.api.set_credits(user, operation, raison, ["modif"])
+                        await sonar_log(
+                            "Retrait de **{}** du compte de {}".format(cur.sformat(delta), user.mention))
+                        await self.bot.say("**Solde modifié** ─ Le solde du membre est désormais de {}".format(
+                            cur.sformat(self.api.get_account(user).solde)))
                     else:
                         await self.bot.say(
                             "**Opération inutile** ─ Il n'y a ni ajout ni retrait d'argent du membre dans cette opération.")
+
             elif operation.startswith("+"):
                 operation = int(operation[1:])
-                if self.api.server_remove_credits(server, operation):
-                    self.api.add_credits(user, operation, raison, ["modif"])
-                    await sonar_log(
-                        "Don de **{}** pour le compte de {}".format(cur.sformat(operation), user.mention))
-                    await self.bot.say(
-                        "**Solde modifié** ─ Le solde du membre est désormais de {}".format(cur.sformat(self.api.get_account(user).solde)))
-                else:
-                    await self.bot.say(
-                        "**Réserves du serveur insuffisantes** ─ La banque n'a pas assez de fonds pour cette opération.")
+                self.api.add_credits(user, operation, raison, ["modif"])
+                await sonar_log(
+                    "Don de **{}** au compte de {}".format(cur.sformat(operation), user.mention))
+                await self.bot.say(
+                    "**Solde modifié** ─ Le solde du membre est désormais de {}".format(
+                        cur.sformat(self.api.get_account(user).solde)))
+
             elif operation.startswith("-"):
                 operation = int(operation[1:])
-                if self.api.server_add_credits(server, operation):
-                    self.api.remove_credits(user, operation, raison, ["modif"])
-                    await sonar_log(
-                        "Taxation de **{}** provenant du compte de {}".format(cur.sformat(operation), user.mention))
-                    await self.bot.say(
-                        "**Solde modifié** ─ Le solde du membre est désormais de {}".format(cur.sformat(self.api.get_account(user).solde)))
-                else:
-                    await self.bot.say(
-                        "**Opération impossible** ─ La banque a refusé cette opération pour une raison inconnue.")
+                self.api.remove_credits(user, operation, raison, ["modif"])
+                await sonar_log(
+                    "Retrait de **{}** du compte de {}".format(cur.sformat(operation), user.mention))
+                await self.bot.say(
+                    "**Solde modifié** ─ Le solde du membre est désormais de {}".format(
+                        cur.sformat(self.api.get_account(user).solde)))
             else:
                 await send_cmd_help(ctx)
         else:
@@ -994,6 +920,7 @@ class Cash:
         self.api.reset_all()
         await self.bot.say("**Données du module reset.**")
 
+
     @_cashset.group(name="bank", pass_context=True, no_pm=True)
     @checks.admin_or_permissions(manage_messages=True)
     async def _bankset(self, ctx):
@@ -1010,7 +937,8 @@ class Cash:
             self.api.save(True)
             await self.bot.say("**Nom modifié** ─ La banque s'appelle désormais ***{}***".format(nom))
         else:
-            await self.bot.say("**Nom invalide** ─ Pour limiter les soucis d'affichage, il ne peut faire au maximum que 30 caractères.")
+            await self.bot.say(
+                "**Nom invalide** ─ Pour limiter les soucis d'affichage, il ne peut faire au maximum que 30 caractères.")
 
     @_bankset.command(pass_context=True)
     async def monnaie(self, ctx, symbole: str, singulier: str, pluriel: str, online_code: str):
@@ -1034,55 +962,32 @@ class Cash:
                                        "> Un transfert de {2} a été réalisé entre X et Y\n"
                                        "> {3} + {2} = {4}\n"
                                        "> Les crédits de {0}, en devise {5} ont été transformés en crédits XXX".format(
-                        ctx.message.author.name, cur.sformat(10), cur.tformat(42), cur.tformat(1), cur.sformat(43), cur.code))
+                        ctx.message.author.name, cur.sformat(10), cur.tformat(42), cur.tformat(1), cur.sformat(43),
+                        cur.code))
                 else:
                     await self.bot.say("Le code de votre monnaie doit être composé de 3 caractères seulement.")
             else:
-                await self.bot.say("Les noms au singulier et pluriels ne peuvent contenir que 16 caractères chacun au maximum.")
+                await self.bot.say(
+                    "Les noms au singulier et pluriels ne peuvent contenir que 16 caractères chacun au maximum.")
         else:
             await self.bot.say("Le symbole doit être composé que d'un unique caractère, qu'il soit spécial "
                                "ou non tant qu'il s'affiche correctement sur Discord.")
 
-    @_bankset.command(pass_context=True)
-    async def taxe(self, ctx, prc: int):
-        """Modifie la valeur de la taxe de base en %, appliquée sur certaines opérations
-
-        Par def. 5%"""
-        if prc <= 20:
-            self.api.get_server(ctx.message.server, "sys")["bank"]["base_taxe"] = prc
-            self.api.save(True)
-            await self.bot.say("**Taxe modifiée** ─ Le pourcentage de taxe de base sera de {}%".format(prc))
-        else:
-            await self.bot.say(
-                "**Valeur invalide** ─ Pour limiter les abus, la taxe ne peut s'élever au maximum qu'à 20%.")
-
     @_bankset.command(name="revenus", pass_context=True)
     async def revenus_set(self, ctx, val: int):
-        """Modifie la quantité de crédits qu'un membre peut recevoir par jour avec la commande ;revenus
+        """Modifie la quantité de crédits qu'un membre peut recevoir par jour avec la commande ;revenus et permet de calculer l'argent versée à l'ouverture d'un compte (3x le revenu)
 
-        Par def. 100"""
+        Par def. 200"""
         cur = self.api.get_currency(ctx.message.server)
         if 500 > val > 0:
-            self.api.get_server(ctx.message.server, "sys")["bank"]["base_revenus"] = val
+            self.api.get_server(ctx.message.server, "sys")["bank"]["base_rj"] = val
             self.api.save(True)
-            await self.bot.say("**Revenu de base modifié** ─ Les membres pourront prétendre quotidiennement à {}".format(cur.tformat(val)))
+            await self.bot.say(
+                "**Revenu de base modifié** ─ Les membres pourront prétendre quotidiennement à {}".format(
+                    cur.tformat(val)))
         else:
             await self.bot.say(
                 "**Valeur invalide** ─ Le revenu ne peut être qu'un chiffre positif inférieur à 500.")
-
-    @_bankset.command(pass_context=True, hidden=True)
-    async def regulation(self, ctx, prc: int):
-        """Modifie le % de l'argent en circulation sur le serveur pouvant être accepté en conversion depuis un autre serveur
-
-        Ex.: Si un membre convertit des crédits d'une devise étrangère et que ça donne 2000 crédits sur ce serveur alors que les stocks sont de 10000 et que la limite est à 10%, la conversion ne pourra pas se faire
-        Par def. 2%"""
-        if 1 <= prc <= 50:
-            self.api.get_server(ctx.message.server, "sys")["bank"]["convert_regul"] = prc
-            self.api.save(True)
-            await self.bot.say("**Régulation ajustée** ─ Les conversions ne seront acceptées en entrée que si la somme résultante est inférieure à {}% des crédits en circulation".format(prc))
-        else:
-            await self.bot.say(
-                "**Valeur invalide** ─ Le pourcentage doit se trouver entre 1 et 50% (par défaut 2%).")
 
 
     async def msg_listener(self, message):
@@ -1104,7 +1009,6 @@ class Cash:
                         self.api.add_cooldown(author, "msg_pay", 300)
                         data.raw["cache"]["msg_pay"]["nb"] += 1
                         self.api.save()
-
 
     def __unload(self):
         self.api.save(True)

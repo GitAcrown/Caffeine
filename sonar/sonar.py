@@ -30,7 +30,7 @@ CHANNELS = {"message_add": "Logs des messages postés",
             "app_nooknet_navet_lowest": "Logs de la valeur minimale du navet sur une période (dimanche seulement)",
             "app_nooknet_navet_highest": "Logs de la valeur maximale du navet sur une période",
             "app_autoattrib": "Logs des auto-attributions de rôles avec 'iam'",
-            "app_cash_bank": "Logs des mouvements de crédits de la banque avec les commandes de modérateur",
+            "app_cash_bank": "Logs des mouvements bancaires avec les commandes de modérateur",
             "warning_low": "Avertissements de basse priorité",
             "warning_high": "Avertissements de haute priorité"}
 
