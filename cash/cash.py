@@ -240,7 +240,7 @@ class CashAPI:
             return CashAccount(self, user)
         return None
 
-    def create_account(self, user: discord.member):
+    def create_account(self, user: discord.Member):
         users = self.get_server(user.server, "users")
         if user.id not in users:
             users[user.id] = {"solde": self.get_server(user.server, "sys")["bank"]["base_rj"] * 3,
