@@ -381,14 +381,14 @@ class Misc:
                     if not url.endswith("/"):
                         url += "/"
                     api_url = "https://api.instagram.com/oembed/?url=" + url
-                    infos = requests.get(api_url)
-                    try:
-                        infos = infos.json()
-                        plus = "[Voir post sur instagram.com]({})".format(url)
-                        desc = "*{}*".format(infos["title"]) + plus
-                    except:
-                        desc = "[Voir post sur instagram.com]({})".format(url)
+                    infos = requests.get(api_url).json()
                     img = requests.get(url + "media")
+
+                    if "title" in infos:
+                        desc = infos["title"] + "[Voir post sur instagram.com]({})".format(url)
+                    else:
+                        desc = "[Voir post sur instagram.com]({})".format(url)
+
                     em = discord.Embed(title=infos["author_name"], url=infos["author_url"],
                                        description=desc)
                     em.set_image(url=img.url)
