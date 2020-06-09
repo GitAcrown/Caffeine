@@ -381,12 +381,16 @@ class Misc:
                     if not url.endswith("/"):
                         url += "/"
                     api_url = "https://api.instagram.com/oembed/?url=" + url
-                    infos = requests.get(api_url).json()
+                    infos = requests.get(api_url)
+                    try:
+                        infos = infos.json()
+                        plus = "[Voir post sur instagram.com]({})".format(url)
+                        desc = "*{}*".format(infos["title"]) + plus
+                    except:
+                        desc = "[Voir post sur instagram.com]({})".format(url)
                     img = requests.get(url + "media")
-
-                    plus = "[Voir post sur instagram.com]({})".format(url)
                     em = discord.Embed(title=infos["author_name"], url=infos["author_url"],
-                                       description="*{}*".format(infos["title"]) + plus)
+                                       description=desc)
                     em.set_image(url=img.url)
                     em.set_footer(text="Preview instagram")
                     await self.bot.send_message(message.channel, embed=em)
