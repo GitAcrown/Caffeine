@@ -374,7 +374,7 @@ class Misc:
     async def on_mess(self, message):
         if message.server:
 
-            if message.content.startswith("https://www.instagram.com/p/"):
+            if "https://www.instagram.com/p/" in message.content:
                 r = re.compile(r'(https:\/\/www\.instagram\.com\/p\/\w+\/?).*?', re.DOTALL | re.IGNORECASE).findall(message.content)
                 if r:
                     url = r[0]
