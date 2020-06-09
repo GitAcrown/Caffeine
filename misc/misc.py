@@ -388,6 +388,7 @@ class Misc:
                     em = discord.Embed(title=infos["author_name"], url=infos["author_url"],
                                        description="*{}*".format(infos["title"]) + plus)
                     em.set_image(url=img.url)
+                    em.set_footer(text="Preview instagram")
                     await self.bot.send_message(message.channel, embed=em)
 
             if not message.author.bot:
