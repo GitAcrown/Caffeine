@@ -1,8 +1,10 @@
 import operator
 import os
+import re
 from datetime import datetime
 
 import discord
+import requests
 import wikipedia
 import wikipediaapi
 from discord.ext import commands
@@ -371,6 +373,23 @@ class Misc:
 
     async def on_mess(self, message):
         if message.server:
+
+            if message.content.startswith("https://www.instagram.com/p/"):
+                r = re.compile(r'(https:\/\/www\.instagram\.com\/p\/\w+\/?).*?', re.DOTALL | re.IGNORECASE).findall(message.content)
+                if r:
+                    url = r[0]
+                    if not url.endswith("/"):
+                        url += "/"
+                    api_url = "https://api.instagram.com/oembed/?url=" + url
+                    infos = requests.get(api_url)
+                    img = requests.get(url + "media")
+
+                    desc = "[{}]({})".format(infos["title"], url)
+                    em = discord.Embed(title=infos["author_name"], url=infos["author_url"],
+                                       description=desc)
+                    em.set_image(url=img.url)
+                    await self.bot.send_message(message.channel, embed=em)
+
             if not message.author.bot:
                 user = message.author
                 api = self.bot.get_cog("Sonar").api
