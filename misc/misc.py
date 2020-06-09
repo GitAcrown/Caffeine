@@ -1,3 +1,4 @@
+import asyncio
 import operator
 import os
 import re
@@ -377,12 +378,14 @@ class Misc:
             if "https://www.instagram.com/p/" in message.content:
                 r = re.compile(r'(https:\/\/www\.instagram\.com\/p\/\w+\/?).*?', re.DOTALL | re.IGNORECASE).findall(message.content)
                 if r:
+                    api_url = "https://api.instagram.com/oembed/?url=" + r[0]
                     url = r[0]
                     if not url.endswith("/"):
                         url += "/"
-                    api_url = "https://api.instagram.com/oembed/?url=" + url
-                    infos = requests.get(api_url).json()
                     img = requests.get(url + "media")
+                    infos = requests.get(api_url)
+                    await asyncio.sleep(0.1)
+                    infos = infos.json()
 
                     if "title" in infos:
                         desc = infos["title"] + "[Voir post sur instagram.com]({})".format(url)
