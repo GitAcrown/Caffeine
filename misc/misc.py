@@ -381,7 +381,7 @@ class Misc:
                     if not url.endswith("/"):
                         url += "/"
                     api_url = "https://api.instagram.com/oembed/?url=" + url
-                    infos = requests.get(api_url)
+                    infos = requests.get(api_url).json()
                     img = requests.get(url + "media")
 
                     desc = "[{}]({})".format(infos["title"], url)
