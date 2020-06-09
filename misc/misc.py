@@ -384,9 +384,9 @@ class Misc:
                     infos = requests.get(api_url).json()
                     img = requests.get(url + "media")
 
-                    desc = "[{}]({})".format(infos["title"], url)
+                    plus = "[Voir post sur instagram.com]({})".format(url)
                     em = discord.Embed(title=infos["author_name"], url=infos["author_url"],
-                                       description=desc)
+                                       description="*{}*".format(infos["title"]) + plus)
                     em.set_image(url=img.url)
                     await self.bot.send_message(message.channel, embed=em)
 
