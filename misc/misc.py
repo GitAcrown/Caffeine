@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 
 import discord
+import instaloader
 import wikipedia
 import wikipediaapi
 from discord.ext import commands
@@ -371,10 +372,35 @@ class Misc:
         else:
             await self.bot.say("**Erreur** | Aucun résultat ne peut être affiché")
 
+    def load_instagram_post(self, code: str):
+        L = instaloader.Instaloader()
+        post = instaloader.Post.from_shortcode(L.context, code)
+        profile = post.owner_profile
+        data = {"owner": {"name": profile.full_name,
+                          "username": profile.username,
+                          "picture": profile.profile_pic_url},
+                "images": [],
+                "videos": [],
+                "short_url": post.shortcode,
+                "timestamp": post.date_utc}
+
+        if post.typename == "GraphSidecar":
+            nodes = post.get_sidecar_nodes()
+            for node in nodes:
+                if node.is_video:
+                    data["videos"].append(node.video_url)
+                else:
+                    data["images"].append(node.display_url)
+        elif post.typename == "GraphVideo":
+            data["videos"].append(post.video_url)
+        else:
+            data["images"].append(post.url)
+        return data
+
     def loot_instagram_post(self, url: str):
         looter = PostLooter(url)
-        looter.logout()
         looter.dump_only = True
+        looter.logout()
         infos = looter.info
         data = {"owner": {"name": infos["owner"]["full_name"],
                           "username": infos["owner"]["username"],
@@ -401,12 +427,11 @@ class Misc:
         if message.server:
 
             if "https://www.instagram.com/p/" in message.content:
-                r = re.compile(r'(https:\/\/www\.instagram\.com\/p\/[\w\-]+\/?).*?', re.DOTALL | re.IGNORECASE).findall(
+                r = re.compile(r'https:\/\/www\.instagram\.com\/p\/([\w\-]+)\/?.*?', re.DOTALL | re.IGNORECASE).findall(
                     message.content)
                 if r:
-                    url = r[0]
-                    print(url)
-                    data = self.loot_instagram_post(url)
+                    code = r[0]
+                    data = self.load_instagram_post(code)
                     print(data)
                     medias = data["images"] + data["videos"]
                     n = 1
