@@ -18,6 +18,8 @@ class Misc:
     def __init__(self, bot):
         self.bot = bot
         self.data = dataIO.load_json("data/misc/data.json")
+        self.cache = {"instaload": False}
+        self.instaload = instaloader.Instaloader()
 
     def save(self):
         fileIO("data/misc/data.json", "save", self.data)
@@ -372,11 +374,15 @@ class Misc:
             await self.bot.say("**Erreur** | Aucun résultat ne peut être affiché")
 
     def load_instagram_post(self, code: str):
-        L = instaloader.Instaloader()
-        if not L.test_login():
-            L.login("atombotapp", "Quelquechose")
+        if not self.cache["instaload"]:
 
-        post = instaloader.Post.from_shortcode(L.context, code)
+            self.instaload.login("atombotapp", "Quelquechose")
+            self.instaload.save_session_to_file()
+            self.cache["instaload"] = True
+        else:
+            self.instaload.load_session_from_file("atombotapp")
+
+        post = instaloader.Post.from_shortcode(self.instaload.context, code)
         profile = post.owner_profile
         data = {"owner": {"name": profile.full_name,
                           "username": profile.username,
