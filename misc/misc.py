@@ -4,10 +4,10 @@ import re
 from datetime import datetime
 
 import discord
-import requests
 import wikipedia
 import wikipediaapi
 from discord.ext import commands
+from instalooter.looters import PostLooter
 
 from .utils import checks
 from .utils.dataIO import fileIO, dataIO
@@ -371,29 +371,60 @@ class Misc:
         else:
             await self.bot.say("**Erreur** | Aucun résultat ne peut être affiché")
 
+    def loot_instagram_post(self, url: str):
+        looter = PostLooter(url)
+        looter.dump_only = True
+        infos = looter.info
+        data = {"owner": {"name": infos["owner"]["full_name"],
+                          "username": infos["owner"]["username"],
+                          "picture": infos["owner"]["profile_pic_url"]},
+                "images": [],
+                "videos": [],
+                "short_url": "https://www.instagram.com/p/" + infos["shortcode"],
+                "timestamp": datetime.utcfromtimestamp(infos["taken_at_timestamp"])}
+        if "edge_sidecar_to_children" in infos:  # plusieurs medias
+            liste = []
+            medias = infos["edge_sidecar_to_children"]["edges"]
+            for media in medias:
+                m = media["node"]
+                if m["is_video"]:
+                    data["videos"].append(m["video_url"])
+                else:
+                    data["images"].append(m["display_url"])
+        elif infos["__typename"] == "GraphImage":
+            data["images"].append(infos["display_url"])
+        elif infos["__typename"] == "GraphVideo":
+            data["videos"].append(infos["video_url"])
+        return data
+
     async def on_mess(self, message):
         if message.server:
 
             if "https://www.instagram.com/p/" in message.content:
-                r = re.compile(r'(https:\/\/www\.instagram\.com\/p\/[\w\-]+\/?).*?', re.DOTALL | re.IGNORECASE).findall(message.content)
+                r = re.compile(r'(https:\/\/www\.instagram\.com\/p\/[\w\-]+\/?).*?', re.DOTALL | re.IGNORECASE).findall(
+                    message.content)
                 if r:
-                    api_url = "https://api.instagram.com/oembed/?url=" + r[0]
                     url = r[0]
-                    if not url.endswith("/"):
-                        url += "/"
-                    img = requests.get(url + "media")
-                    infos = requests.get(api_url).json()
+                    data = self.loot_instagram_post(url)
+                    medias = data["images"] + data["videos"]
+                    n = 1
+                    for media in medias:
+                        if n == 1:
+                            em = discord.Embed(color=message.author.color, timestamp=data["timestamp"])
+                            em.set_author(name="{} (@{})".format(data["owner"]["name"], data["owner"]["username"]),
+                                          icon_url=data["owner"]["picture"], url=data["short_url"])
+                        else:
+                            em = discord.Embed(color=message.author.color, timestamp=data["timestamp"])
 
-                    if "title" in infos:
-                        desc = infos["title"] + "\n[Voir post sur instagram.com]({})".format(url)
-                    else:
-                        desc = "\n[Voir post sur instagram.com]({})".format(url)
+                        if media in data["images"]:
+                            em.set_image(url=media)
+                            em.set_footer(text="Media {}/{}".format(n, len(medias)))
+                            await self.bot.send_message(message.channel, embed=em)
+                        else:
+                            txt = "Media {}/{}\n".format(n, len(medias)) + media
+                            await self.bot.send_message(message.channel, txt)
+                        n += 1
 
-                    em = discord.Embed(title=infos["author_name"], url=infos["author_url"],
-                                       description=desc)
-                    em.set_image(url=img.url)
-                    em.set_footer(text="Preview instagram")
-                    await self.bot.send_message(message.channel, embed=em)
 
             if not message.author.bot:
                 user = message.author
