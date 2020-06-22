@@ -372,8 +372,8 @@ class Misc:
             await self.bot.say("**Erreur** | Aucun résultat ne peut être affiché")
 
     def loot_instagram_post(self, url: str):
-        PostLooter.logout()
         looter = PostLooter(url)
+        looter.logout()
         looter.dump_only = True
         infos = looter.info
         data = {"owner": {"name": infos["owner"]["full_name"],
