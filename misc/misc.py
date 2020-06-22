@@ -389,7 +389,7 @@ class Misc:
                           "picture": profile.profile_pic_url},
                 "images": [],
                 "videos": [],
-                "short_url": post.shortcode,
+                "short_url": "https://www.instagram.com/p/" + post.shortcode,
                 "timestamp": post.date_utc}
 
         if post.typename == "GraphSidecar":
@@ -449,7 +449,7 @@ class Misc:
                             em = discord.Embed(color=message.author.color, timestamp=data["timestamp"])
                             if n == 1:
                                 em.set_author(name="{} (@{})".format(data["owner"]["name"], data["owner"]["username"]),
-                                              icon_url=data["owner"]["picture"])
+                                              url=data["short_link"], icon_url=data["owner"]["picture"])
                             if media in data["images"]:
                                 print(media)
                                 em.set_image(url=media)
