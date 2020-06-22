@@ -434,17 +434,14 @@ class Misc:
                 if r:
                     code = r[0]
                     data = self.load_instagram_post(code)
-                    print(data)
                     medias = data["images"] + data["videos"]
                     n = 1
                     for media in medias: # en cas où plusieurs médias
+                        print(media)
+                        em = discord.Embed(color=message.author.color, timestamp=data["timestamp"])
                         if n == 1:
-                            em = discord.Embed(color=message.author.color, timestamp=data["timestamp"])
                             em.set_author(name="{} (@{})".format(data["owner"]["name"], data["owner"]["username"]),
                                           icon_url=data["owner"]["picture"], url=data["short_url"])
-                        else:
-                            em = discord.Embed(color=message.author.color, timestamp=data["timestamp"])
-
                         if media in data["images"]:
                             em.set_image(url=media)
                             em.set_footer(text="Media {}/{}".format(n, len(medias)))
