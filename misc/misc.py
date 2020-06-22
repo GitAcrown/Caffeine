@@ -449,7 +449,7 @@ class Misc:
                             em = discord.Embed(color=message.author.color, timestamp=data["timestamp"])
                             if n == 1:
                                 em.set_author(name="{} (@{})".format(data["owner"]["name"], data["owner"]["username"]),
-                                              url=data["short_link"], icon_url=data["owner"]["picture"])
+                                              url=data["short_url"], icon_url=data["owner"]["picture"])
                             if media in data["images"]:
                                 print(media)
                                 em.set_image(url=media)
