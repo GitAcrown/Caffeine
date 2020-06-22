@@ -410,7 +410,7 @@ class Misc:
                     print(data)
                     medias = data["images"] + data["videos"]
                     n = 1
-                    for media in medias:
+                    for media in medias: # en cas où il y aurait plusieurs médias
                         if n == 1:
                             em = discord.Embed(color=message.author.color, timestamp=data["timestamp"])
                             em.set_author(name="{} (@{})".format(data["owner"]["name"], data["owner"]["username"]),
