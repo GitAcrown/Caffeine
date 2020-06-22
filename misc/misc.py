@@ -439,23 +439,26 @@ class Misc:
                     message.content)
                 if r:
                     code = r[0]
+                    msg = await self.bot.send_message(message.channel, "**Chargement de la preview instagram** ─ Patientez...")
                     data = self.load_instagram_post(code)
-                    medias = data["images"] + data["videos"]
-                    n = 1
-                    for media in medias: # en cas où plusieurs médias
-                        print(media)
-                        em = discord.Embed(color=message.author.color, timestamp=data["timestamp"])
-                        if n == 1:
-                            em.set_author(name="{} (@{})".format(data["owner"]["name"], data["owner"]["username"]),
-                                          icon_url=data["owner"]["picture"], url=data["short_url"])
-                        if media in data["images"]:
-                            em.set_image(url=media)
-                            em.set_footer(text="Media {}/{}".format(n, len(medias)))
-                            await self.bot.send_message(message.channel, embed=em)
-                        else:
-                            txt = "Media {}/{}\n".format(n, len(medias)) + media
-                            await self.bot.send_message(message.channel, txt)
-                        n += 1
+                    if data:
+                        await self.bot.delete_message(msg)
+                        medias = data["images"] + data["videos"]
+                        n = 1
+                        for media in medias: # en cas où plusieurs médias
+                            print(media)
+                            em = discord.Embed(color=message.author.color, timestamp=data["timestamp"])
+                            if n == 1:
+                                em.set_author(name="{} (@{})".format(data["owner"]["name"], data["owner"]["username"]),
+                                              icon_url=data["owner"]["picture"], url=data["short_url"])
+                            if media in data["images"]:
+                                em.set_image(url=media)
+                                # em.set_footer(text="Media {}/{}".format(n, len(medias)))
+                                await self.bot.send_message(message.channel, embed=em)
+                            else:
+                                txt = "Media {}/{}\n".format(n, len(medias)) + media
+                                await self.bot.send_message(message.channel, txt)
+                            n += 1
 
 
             if not message.author.bot:
