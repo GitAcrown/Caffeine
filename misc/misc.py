@@ -372,6 +372,7 @@ class Misc:
             await self.bot.say("**Erreur** | Aucun résultat ne peut être affiché")
 
     def loot_instagram_post(self, url: str):
+        PostLooter.logout()
         looter = PostLooter(url)
         looter.dump_only = True
         infos = looter.info
@@ -383,7 +384,6 @@ class Misc:
                 "short_url": "https://www.instagram.com/p/" + infos["shortcode"],
                 "timestamp": datetime.utcfromtimestamp(infos["taken_at_timestamp"])}
         if "edge_sidecar_to_children" in infos:  # plusieurs medias
-            liste = []
             medias = infos["edge_sidecar_to_children"]["edges"]
             for media in medias:
                 m = media["node"]
