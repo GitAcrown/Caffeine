@@ -8,7 +8,6 @@ import instaloader
 import wikipedia
 import wikipediaapi
 from discord.ext import commands
-from instalooter.looters import PostLooter
 
 from .utils import checks
 from .utils.dataIO import fileIO, dataIO
@@ -374,6 +373,9 @@ class Misc:
 
     def load_instagram_post(self, code: str):
         L = instaloader.Instaloader()
+        if not L.test_login():
+            L.login("atombotapp", "Quelquechose")
+
         post = instaloader.Post.from_shortcode(L.context, code)
         profile = post.owner_profile
         data = {"owner": {"name": profile.full_name,
@@ -397,7 +399,7 @@ class Misc:
             data["images"].append(post.url)
         return data
 
-    def loot_instagram_post(self, url: str):
+    """def loot_instagram_post(self, url: str):
         looter = PostLooter(url)
         looter.dump_only = True
         looter.logout()
@@ -421,7 +423,7 @@ class Misc:
             data["images"].append(infos["display_url"])
         elif infos["__typename"] == "GraphVideo":
             data["videos"].append(infos["video_url"])
-        return data
+        return data"""
 
     async def on_mess(self, message):
         if message.server:
