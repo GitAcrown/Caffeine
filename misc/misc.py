@@ -405,7 +405,9 @@ class Misc:
                     message.content)
                 if r:
                     url = r[0]
+                    print(url)
                     data = self.loot_instagram_post(url)
+                    print(data)
                     medias = data["images"] + data["videos"]
                     n = 1
                     for media in medias:
