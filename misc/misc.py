@@ -446,10 +446,10 @@ class Misc:
                         medias = data["images"] + data["videos"]
                         n = 1
                         for media in medias: # en cas où plusieurs médias
-                            em = discord.Embed()
+                            em = discord.Embed(color=message.author.color)
                             if n == 1:
-                                em.set_author(name="{} (@{})".format(data["owner"]["name"], data["owner"]["username"]),
-                                              icon_url=data["owner"]["picture"], url=data["short_url"])
+                                pass
+                                # em.set_author(name="{} (@{})".format(data["owner"]["name"], data["owner"]["username"]), icon_url=data["owner"]["picture"], url=data["short_url"])
                             if media in data["images"]:
                                 print(media)
                                 em.set_image(url=media)
