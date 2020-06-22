@@ -374,13 +374,13 @@ class Misc:
             await self.bot.say("**Erreur** | Aucun résultat ne peut être affiché")
 
     def load_instagram_post(self, code: str):
-        if not self.cache["instaload"]:
-
-            self.instaload.login("atombotapp", "Quelquechose")
-            self.instaload.save_session_to_file()
-            self.cache["instaload"] = True
-        else:
-            self.instaload.load_session_from_file("atombotapp")
+        if not self.instaload.test_login():
+            if not self.cache["instaload"]:
+                self.instaload.login("atombotapp", "Quelquechose")
+                self.instaload.save_session_to_file()
+                self.cache["instaload"] = True
+            else:
+                self.instaload.load_session_from_file("atombotapp")
 
         post = instaloader.Post.from_shortcode(self.instaload.context, code)
         profile = post.owner_profile
