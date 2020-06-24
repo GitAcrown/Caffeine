@@ -417,7 +417,7 @@ class Misc:
                             if n == 1:
                                 short_url = "https://www.instagram.com/p/" + post.shortcode
                                 em.set_author(name="{} (@{})".format(profile.full_name, profile.username),
-                                              url=short_url)
+                                              url=short_url, icon_url=profile.profile_pic_url)
                             if media in images:
                                 em.set_image(url=media)
                                 if len(medias) > 1:
