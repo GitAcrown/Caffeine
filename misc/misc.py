@@ -383,7 +383,7 @@ class Misc:
                 self.instaload.load_session_from_file("atombotapp")
 
         post = instaloader.Post.from_shortcode(self.instaload.context, code)
-        images = videos = []
+        images, videos = [], []
         if post.typename == "GraphSidecar":
             nodes = post.get_sidecar_nodes()
             for node in nodes:
