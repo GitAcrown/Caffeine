@@ -417,10 +417,11 @@ class Misc:
                             if n == 1:
                                 short_url = "https://www.instagram.com/p/" + post.shortcode
                                 em.set_author(name="{} (@{})".format(profile.full_name, profile.username),
-                                              url=short_url, icon_url=profile.profile_pic_url)
+                                              url=short_url)
                             if media in images:
                                 em.set_image(url=media)
-                                em.set_footer(text="Media {}/{}".format(n, len(medias)))
+                                if len(medias) > 1:
+                                    em.set_footer(text="Media {}/{}".format(n, len(medias)))
                                 await self.bot.send_message(message.channel, embed=em)
                             else:
                                 txt = "Media {}/{}\n".format(n, len(medias)) + media
