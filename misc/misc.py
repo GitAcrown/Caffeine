@@ -383,53 +383,19 @@ class Misc:
                 self.instaload.load_session_from_file("atombotapp")
 
         post = instaloader.Post.from_shortcode(self.instaload.context, code)
-        profile = post.owner_profile
-        data = {"owner": {"name": profile.full_name,
-                          "username": profile.username,
-                          "picture": profile.profile_pic_url},
-                "images": [],
-                "videos": [],
-                "short_url": "https://www.instagram.com/p/" + post.shortcode,
-                "timestamp": post.date_utc}
-
+        images = videos = []
         if post.typename == "GraphSidecar":
             nodes = post.get_sidecar_nodes()
             for node in nodes:
                 if node.is_video:
-                    data["videos"].append(node.video_url)
+                    videos.append(node.video_url)
                 else:
-                    data["images"].append(node.display_url)
+                    images.append(node.display_url)
         elif post.typename == "GraphVideo":
-            data["videos"].append(post.video_url)
+            videos.append(post.video_url)
         else:
-            data["images"].append(post.url)
-        return data
-
-    """def loot_instagram_post(self, url: str):
-        looter = PostLooter(url)
-        looter.dump_only = True
-        looter.logout()
-        infos = looter.info
-        data = {"owner": {"name": infos["owner"]["full_name"],
-                          "username": infos["owner"]["username"],
-                          "picture": infos["owner"]["profile_pic_url"]},
-                "images": [],
-                "videos": [],
-                "short_url": "https://www.instagram.com/p/" + infos["shortcode"],
-                "timestamp": datetime.utcfromtimestamp(infos["taken_at_timestamp"])}
-        if "edge_sidecar_to_children" in infos:  # plusieurs medias
-            medias = infos["edge_sidecar_to_children"]["edges"]
-            for media in medias:
-                m = media["node"]
-                if m["is_video"]:
-                    data["videos"].append(m["video_url"])
-                else:
-                    data["images"].append(m["display_url"])
-        elif infos["__typename"] == "GraphImage":
-            data["images"].append(infos["display_url"])
-        elif infos["__typename"] == "GraphVideo":
-            data["videos"].append(infos["video_url"])
-        return data"""
+            images.append(post.url)
+        return post, images, videos
 
     async def on_mess(self, message):
         if message.server:
@@ -440,18 +406,19 @@ class Misc:
                 if r:
                     code = r[0]
                     msg = await self.bot.send_message(message.channel, "**Chargement de la preview instagram** ─ Patientez...")
-                    data = self.load_instagram_post(code)
-                    if data:
+                    post, images, videos = self.load_instagram_post(code)
+                    medias = images + videos
+                    if medias:
+                        profile = post.owner_profile
                         await self.bot.delete_message(msg)
-                        medias = data["images"] + data["videos"]
                         n = 1
-                        for media in medias: # en cas où plusieurs médias
-                            em = discord.Embed(color=message.author.color, timestamp=data["timestamp"])
+                        for media in medias:
+                            em = discord.Embed(color=message.author.color, timestamp=post.date_utc)
                             if n == 1:
-                                em.set_author(name="{} (@{})".format(data["owner"]["name"], data["owner"]["username"]),
-                                              url=data["short_url"], icon_url=data["owner"]["picture"])
-                            if media in data["images"]:
-                                print(media)
+                                short_url = "https://www.instagram.com/p/" + post.shortcode
+                                em.set_author(name="{} (@{})".format(profile.full_name, profile.username),
+                                              url=short_url, icon_url=profile.profile_pic_url)
+                            if media in images:
                                 em.set_image(url=media)
                                 em.set_footer(text="Media {}/{}".format(n, len(medias)))
                                 await self.bot.send_message(message.channel, embed=em)
