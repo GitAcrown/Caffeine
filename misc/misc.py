@@ -407,19 +407,18 @@ class Misc:
                     code = r[0]
                     msg = await self.bot.send_message(message.channel, "**Chargement de la preview instagram** ─ Patientez...")
                     post, images, videos = self.load_instagram_post(code)
-                    access = "\n*" + post.__annotations__ + "*" if post.__annotations__ else ""
                     medias = images + videos
                     if medias:
                         profile = post.owner_profile
                         await self.bot.delete_message(msg)
                         n = 1
                         for media in medias:
-                            em = discord.Embed(color=message.author.color, description=post.caption + access,
+                            em = discord.Embed(color=message.author.color, description=post.caption if post.caption else "",
                                                timestamp=post.date_utc)
                             if n == 1:
                                 short_url = "https://www.instagram.com/p/" + post.shortcode
                                 em.set_author(name="{} (@{})".format(profile.full_name, profile.username),
-                                              url=short_url, icon_url=profile.profile_pic_url)
+                                              url=short_url)
                             if media in images:
                                 em.set_image(url=media)
                                 if len(medias) > 1:
