@@ -405,6 +405,13 @@ class Misc:
                     message.content)
                 if r:
                     code = r[0]
+                    try:
+                        if message.embeds:
+                            await self.bot.delete_message(message.embeds)
+                        else:
+                            pass
+                    except:
+                        print("Impossible de supprimer l'embed")
                     msg = await self.bot.send_message(message.channel, "**Chargement de la preview instagram** ─ Patientez...")
                     post, images, videos = self.load_instagram_post(code)
                     medias = images + videos

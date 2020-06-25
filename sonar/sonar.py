@@ -334,15 +334,16 @@ class Sonar:
     async def on_msg_edit(self, before, after):
         if after.server:
             if after.author != self.bot.user:
-                if self.api.preload_channel(after.server, "message_edit"):
-                    msg_url = "https://discordapp.com/channels/{}/{}/{}".format(after.server.id, after.channel.id, after.id)
-                    em = discord.Embed(description="[Aller au message]({})".format(msg_url),
-                                       timestamp=datetime.utcnow(), color=0x6ED7D3)  # Bleu pastel
-                    em.add_field(name="Avant", value=before.content, inline=False)
-                    em.add_field(name="Après", value=after.content, inline=False)
-                    em.set_author(name=str(after.author) + " ─ Message édité", icon_url=after.author.avatar_url)
-                    em.set_footer(text="Auteur ID: {} • Msg ID: {}".format(after.author.id, after.id))
-                    await self.api.publish_log(after.server, "message_edit", em)
+                if before.content != after.content:
+                    if self.api.preload_channel(after.server, "message_edit"):
+                        msg_url = "https://discordapp.com/channels/{}/{}/{}".format(after.server.id, after.channel.id, after.id)
+                        em = discord.Embed(description="[Aller au message]({})".format(msg_url),
+                                           timestamp=datetime.utcnow(), color=0x6ED7D3)  # Bleu pastel
+                        em.add_field(name="Avant", value=before.content, inline=False)
+                        em.add_field(name="Après", value=after.content, inline=False)
+                        em.set_author(name=str(after.author) + " ─ Message édité", icon_url=after.author.avatar_url)
+                        em.set_footer(text="Auteur ID: {} • Msg ID: {}".format(after.author.id, after.id))
+                        await self.api.publish_log(after.server, "message_edit", em)
 
     async def on_voice_update(self, before, after):
         if type(after) is discord.Member:
