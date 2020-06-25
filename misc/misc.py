@@ -399,7 +399,9 @@ class Misc:
 
     async def on_mess(self, message):
         if message.server:
-
+            if "<" or ">" in message.content:
+                message.content = message.content.replace("<", "")
+                message.content = message.content.replace(">", "")
             if "https://www.instagram.com/p/" in message.content:
                 r = re.compile(r'(?<!!)https://www\.instagram\.com/p/([\w\-]+).*?', re.DOTALL | re.IGNORECASE).findall(
                     message.content)
