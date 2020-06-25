@@ -401,17 +401,10 @@ class Misc:
         if message.server:
 
             if "https://www.instagram.com/p/" in message.content:
-                r = re.compile(r'https:\/\/www\.instagram\.com\/p\/([\w\-]+)\/?.*?', re.DOTALL | re.IGNORECASE).findall(
+                r = re.compile(r'(?<!!)https://www\.instagram\.com/p/([\w\-]+).*?', re.DOTALL | re.IGNORECASE).findall(
                     message.content)
                 if r:
                     code = r[0]
-                    try:
-                        if message.embeds:
-                            await self.bot.delete_message(message.embeds)
-                        else:
-                            pass
-                    except:
-                        print("Impossible de supprimer l'embed")
                     msg = await self.bot.send_message(message.channel, "**Chargement de la preview instagram** ─ Patientez...")
                     post, images, videos = self.load_instagram_post(code)
                     medias = images + videos
