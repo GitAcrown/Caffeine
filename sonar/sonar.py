@@ -142,7 +142,7 @@ class Sonar:
         utc = lambda a: datetime.utcfromtimestamp(time.mktime(time.strptime("01/01/{}".format(a), "%d/%m/%Y")))
 
         data = {}
-        qlc = long_min / 2
+        qlc = int(long_min / 2)
         await self.bot.say("🔍 **Recherche** — Messages de + de {} caractères dans {} msg/an, dans le salon {}".format(long_min,
                                                                                                         max_scan, channel.mention))
         while annee >= stop:
