@@ -145,32 +145,36 @@ class Sonar:
         await self.bot.say("🔍 **Recherche** — Messages de + de {} caractères dans {} msg de {}".format(long_min,
                                                                                                         max_scan, channel.mention))
         while annee >= stop:
-            async for msg in self.bot.logs_from(channel, limit=max_scan, after=utc(annee)):
-                if n == (0.01 * max_scan):
-                    await self.bot.say("**Progression du scan (année {})** — Démarré".format(annee))
-                if n == (0.10 * max_scan):
-                    await self.bot.say("**Progression du scan (année {})** — Env. 10%".format(annee))
-                if n == (0.25 * max_scan):
-                    await self.bot.say("**Progression du scan (année {})** — Env. 25%".format(annee))
-                if n == (0.40 * max_scan):
-                    await self.bot.say("**Progression du scan (année {})** — Env. 40%".format(annee))
-                if n == (0.65 * max_scan):
-                    await self.bot.say("**Progression du scan (année {})** — Env. 65%".format(annee))
-                if n == (0.85 * max_scan):
-                    await self.bot.say("**Progression du scan (année {})** — Env. 85%".format(annee))
-                n += 1
-                try:
-                    if len(msg.content) >= long_min:
-                        idh = msg.content[:64]
-                        if idh not in data:
-                            data[idh] = {"txt": msg.content,
-                                         "n": 1}
-                        else:
-                            data[idh]["n"] += 1
-                except:
-                    pass
-            await self.bot.say("**Progression du scan (année {})** — Terminé".format(annee))
-            annee -= 1
+            try:
+                async for msg in self.bot.logs_from(channel, limit=max_scan, after=utc(annee)):
+                    if n == (0.01 * max_scan):
+                        await self.bot.say("**Progression du scan (année {})** — Démarré".format(annee))
+                    if n == (0.10 * max_scan):
+                        await self.bot.say("**Progression du scan (année {})** — Env. 10%".format(annee))
+                    if n == (0.25 * max_scan):
+                        await self.bot.say("**Progression du scan (année {})** — Env. 25%".format(annee))
+                    if n == (0.40 * max_scan):
+                        await self.bot.say("**Progression du scan (année {})** — Env. 40%".format(annee))
+                    if n == (0.65 * max_scan):
+                        await self.bot.say("**Progression du scan (année {})** — Env. 65%".format(annee))
+                    if n == (0.85 * max_scan):
+                        await self.bot.say("**Progression du scan (année {})** — Env. 85%".format(annee))
+                    n += 1
+                    try:
+                        if len(msg.content) >= long_min:
+                            idh = msg.content[:64]
+                            if idh not in data:
+                                data[idh] = {"txt": msg.content,
+                                             "n": 1}
+                            else:
+                                data[idh]["n"] += 1
+                    except:
+                        pass
+                await self.bot.say("**Progression du scan (année {})** — Terminé".format(annee))
+                annee -= 1
+            except:
+                await self.bot.say("**Progression du scan (année {})** — Aucune donnée".format(annee))
+                annee -= 1
 
         await self.bot.say("**Scan terminé** — Classement et impression des résultats...")
         txt = "Messages de plus de {} caractères postés sur {}\ninfo : le bot parcours les années dans l'ordre décroissant\n".format(long_min, channel.name)
