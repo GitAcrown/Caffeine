@@ -142,7 +142,8 @@ class Sonar:
         utc = lambda a: datetime.utcfromtimestamp(time.mktime(time.strptime("01/01/{}".format(a), "%d/%m/%Y")))
 
         data = {}
-        await self.bot.say("🔍 **Recherche** — Messages de + de {} caractères dans {} msg de {}".format(long_min,
+        qlc = long_min / 2
+        await self.bot.say("🔍 **Recherche** — Messages de + de {} caractères dans {} msg/an, dans le salon {}".format(long_min,
                                                                                                         max_scan, channel.mention))
         while annee >= stop:
             try:
@@ -160,18 +161,16 @@ class Sonar:
                     if n == (0.85 * max_scan):
                         await self.bot.say("**Progression du scan (année {})** — Env. 85%".format(annee))
                     n += 1
-                    try:
-                        if len(msg.content) >= long_min:
-                            idh = msg.content[:64]
-                            if idh not in data:
-                                data[idh] = {"txt": msg.content,
-                                             "n": 1}
-                            else:
-                                data[idh]["n"] += 1
-                    except:
-                        pass
+                    if len(msg.content) >= long_min:
+                        idh = hash(msg.content[:qlc])
+                        if idh not in data:
+                            data[idh] = {"txt": msg.content,
+                                         "n": 1}
+                        else:
+                            data[idh]["n"] += 1
                 await self.bot.say("**Progression du scan (année {})** — Terminé".format(annee))
                 annee -= 1
+                n = 0
             except:
                 await self.bot.say("**Progression du scan (année {})** — Aucune donnée".format(annee))
                 annee -= 1
