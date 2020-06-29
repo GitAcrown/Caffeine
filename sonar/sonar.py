@@ -161,13 +161,16 @@ class Sonar:
                     if n == (0.85 * max_scan):
                         await self.bot.say("**Progression du scan (année {})** — Env. 85%".format(annee))
                     n += 1
-                    if len(msg.content) >= long_min:
-                        idh = hash(msg.content[:qlc])
-                        if idh not in data:
-                            data[idh] = {"txt": msg.content,
-                                         "n": 1}
-                        else:
-                            data[idh]["n"] += 1
+                    try:
+                        if len(msg.content) >= long_min:
+                            idh = hash(msg.content[:qlc])
+                            if idh not in data:
+                                data[idh] = {"txt": msg.content,
+                                             "n": 1}
+                            else:
+                                data[idh]["n"] += 1
+                    except:
+                        pass
                 await self.bot.say("**Progression du scan (année {})** — Terminé".format(annee))
                 annee -= 1
                 n = 0
