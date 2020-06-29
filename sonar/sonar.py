@@ -135,43 +135,48 @@ class Sonar:
         return previous_row[-1]
 
     @commands.command(aliases=["sl"], pass_context=True)
-    async def scanlong(self, ctx, long_min: int, max_scan: int):
+    async def scanlong(self, ctx, max_scan: int, long_min: int, stop: int):
         channel = ctx.message.channel
         n = 0
+        annee = datetime.now().year
+        utc = lambda a: datetime.utcfromtimestamp(time.mktime(time.strptime("01/01/{}".format(a), "%d/%m/%Y")))
+
         data = {}
         await self.bot.say("🔍 **Recherche** — Messages de + de {} caractères dans {} msg de {}".format(long_min,
                                                                                                         max_scan, channel.mention))
-        async for msg in self.bot.logs_from(channel, limit=max_scan):
-            if n == (0.10 * max_scan):
-                await self.bot.say("**Progression du scan** — Env. 10%")
-            if n == (0.25 * max_scan):
-                await self.bot.say("**Progression du scan** — Env. 25%")
-            if n == (0.40 * max_scan):
-                await self.bot.say("**Progression du scan** — Env. 40%")
-            if n == (0.65 * max_scan):
-                await self.bot.say("**Progression du scan** — Env. 65%")
-            if n == (0.85 * max_scan):
-                await self.bot.say("**Progression du scan** — Env. 85%")
-            n += 1
-            try:
-                if len(msg.content) >= long_min:
-                    idh = hash(msg.content[:100])
-                    if idh not in data:
-                        data[idh] = {"txt": msg.content,
-                                     "n": 1}
-                    else:
-                        data[idh]["n"] += 1
-            except:
-                pass
+        while annee >= stop:
+            async for msg in self.bot.logs_from(channel, limit=max_scan, after=utc(annee)):
+                if n == (0.10 * max_scan):
+                    await self.bot.say("**Progression du scan** — Env. 10%")
+                if n == (0.25 * max_scan):
+                    await self.bot.say("**Progression du scan** — Env. 25%")
+                if n == (0.40 * max_scan):
+                    await self.bot.say("**Progression du scan** — Env. 40%")
+                if n == (0.65 * max_scan):
+                    await self.bot.say("**Progression du scan** — Env. 65%")
+                if n == (0.85 * max_scan):
+                    await self.bot.say("**Progression du scan** — Env. 85%")
+                n += 1
+                try:
+                    if len(msg.content) >= long_min:
+                        idh = msg.content[:64]
+                        if idh not in data:
+                            data[idh] = {"txt": msg.content,
+                                         "n": 1}
+                        else:
+                            data[idh]["n"] += 1
+                except:
+                    pass
+            annee -= 1
 
         await self.bot.say("**Scan terminé** — Classement et impression des résultats...")
-        txt = "Messages de plus de {} caractères postés sur {}\n\n".format(long_min, channel.name)
+        txt = "Messages de plus de {} caractères postés sur {}\ninfo : le bot parcours les années dans l'ordre décroissant\n".format(long_min, channel.name)
         datalist = [(e, data[e]["n"], data[e]["txt"]) for e in data]
         sortedl = sorted(datalist, key=operator.itemgetter(1), reverse=True)
         for e in sortedl:
             txt += "#{} = {}\n" \
                    "{}\n\n".format(e[0], e[1], e[2])
-        filename = "SCAN_{}.txt".format(time.time())
+        filename = "SCANLONG_{}.txt".format(time.time())
         file = open("data/sonar/temp/{}".format(filename), "w", encoding="UTF-8")
         file.write(txt)
         file.close()
