@@ -411,10 +411,9 @@ class Misc:
                     post, images, videos = self.load_instagram_post(code)
                     medias = images + videos
                     if medias:
-                        if len(medias) > 1 or len(videos) > 0:
+                        if len(medias) > 1 or videos:
                             profile = post.owner_profile
                             previews = medias
-                            await self.bot.delete_message(msg)
                             n = 1
                             for media in medias:
                                 if media in videos:
