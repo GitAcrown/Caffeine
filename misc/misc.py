@@ -407,12 +407,12 @@ class Misc:
                 r = re.compile(r'(?<!!)https://www\.instagram\.com/p/([\w\-]+).*?', re.DOTALL | re.IGNORECASE).findall(
                     message.content)
                 if r:
+                    await self.bot.send_typing(message.channel)
                     code = r[0]
                     post, images, videos = self.load_instagram_post(code)
                     medias = images + videos
                     if medias:
                         if len(medias) > 1 or videos:
-                            await self.bot.send_typing(message.channel)
                             profile = post.owner_profile
                             previews = medias
                             n = 1
@@ -433,7 +433,7 @@ class Misc:
                                                                         "profile": profile,
                                                                         "message": message,
                                                                         "posted": False}
-                                await self.bot.add_reaction(message, "👁️")
+                                await self.bot.add_reaction(message, "👁")
 
 
             if not message.author.bot:
@@ -473,37 +473,38 @@ class Misc:
     async def on_react(self, user, reaction):
         message = reaction.message
         if message.server:
-            if reaction.emoji == "👁️":
-                if user.server_permissions.manage_messages or user == message.author:
-                    if message.id in self.cache["_instagram"]:
-                        if not self.cache["_instagram"][message.id]["posted"]:
-                            cache =  self.cache["_instagram"][message.id]
-                            post, profile = cache["post"], cache["profile"]
-                            images, videos = cache["images"], cache["videos"]
-                            n = cache["nb"]
-                            medias = cache["previews"]
-                            for media in medias:
-                                em = discord.Embed(color=message.author.color, timestamp=post.date_utc)
-                                if n == 1:
-                                    short_url = "https://www.instagram.com/p/" + post.shortcode
-                                    em.description = post.caption if post.caption else ""
-                                    em.set_author(name="{} (@{})".format(profile.full_name, profile.username),
-                                                  url=short_url)
-                                if media in images:
-                                    em.set_image(url=media)
-                                    if len(medias) > 1:
-                                        em.set_footer(text="Media {}/{}".format(n, len(medias)))
-                                    await self.bot.send_message(message.channel, embed=em)
-                                else:
-                                    txt = "Media {}/{} · {}\n".format(
-                                        n, len(medias), post.date_utc.strftime("Le %d/%m/%Y à %H:%M")) + media
-                                    await self.bot.send_message(message.channel, txt)
-                                n += 1
-                            self.cache["_instagram"][message.id]["posted"] = True
-                            try:
-                                await self.bot.remove_reaction(message, "👁️")
-                            except:
-                                pass
+            if reaction.emoji == "👁":
+                if not user.bot:
+                    if user.server_permissions.manage_messages or user == message.author:
+                        if message.id in self.cache["_instagram"]:
+                            if not self.cache["_instagram"][message.id]["posted"]:
+                                cache =  self.cache["_instagram"][message.id]
+                                post, profile = cache["post"], cache["profile"]
+                                images, videos = cache["images"], cache["videos"]
+                                n = cache["nb"]
+                                medias = cache["previews"]
+                                for media in medias:
+                                    em = discord.Embed(color=message.author.color, timestamp=post.date_utc)
+                                    if n == 1:
+                                        short_url = "https://www.instagram.com/p/" + post.shortcode
+                                        em.description = post.caption if post.caption else ""
+                                        em.set_author(name="{} (@{})".format(profile.full_name, profile.username),
+                                                      url=short_url)
+                                    if media in images:
+                                        em.set_image(url=media)
+                                        if len(medias) > 1:
+                                            em.set_footer(text="Media {}/{}".format(n, len(medias)))
+                                        await self.bot.send_message(message.channel, embed=em)
+                                    else:
+                                        txt = "Media {}/{} · {}\n".format(
+                                            n, len(medias), post.date_utc.strftime("Le %d/%m/%Y à %H:%M")) + media
+                                        await self.bot.send_message(message.channel, txt)
+                                    n += 1
+                                self.cache["_instagram"][message.id]["posted"] = True
+                                try:
+                                    await self.bot.remove_reaction(message, "👁️")
+                                except:
+                                    pass
 
 def check_folders():
     if not os.path.exists("data/misc"):
