@@ -408,7 +408,6 @@ class Misc:
                     message.content)
                 if r:
                     code = r[0]
-                    msg = await self.bot.send_message(message.channel, "**Chargement de la preview instagram** ─ Patientez...")
                     post, images, videos = self.load_instagram_post(code)
                     medias = images + videos
                     if medias:
