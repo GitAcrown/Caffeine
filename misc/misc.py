@@ -489,7 +489,6 @@ class Misc:
                                     em = discord.Embed(color=message.author.color, timestamp=post.date_utc)
                                     if n == 1:
                                         short_url = "https://www.instagram.com/p/" + post.shortcode
-                                        em.description = post.caption if post.caption else ""
                                         em.set_author(name="{} (@{})".format(profile.full_name, profile.username),
                                                       url=short_url)
                                     if media in images:
