@@ -18,7 +18,8 @@ class Misc:
     def __init__(self, bot):
         self.bot = bot
         self.data = dataIO.load_json("data/misc/data.json")
-        self.cache = {"instaload": False}
+        self.cache = {"instaload": False,
+                      "_instagram": {}}
         self.instaload = instaloader.Instaloader()
 
     def save(self):
@@ -411,26 +412,29 @@ class Misc:
                     post, images, videos = self.load_instagram_post(code)
                     medias = images + videos
                     if medias:
-                        profile = post.owner_profile
-                        await self.bot.delete_message(msg)
-                        n = 1
-                        for media in medias:
-                            em = discord.Embed(color=message.author.color,
-                                               timestamp=post.date_utc)
-                            if n == 1:
-                                short_url = "https://www.instagram.com/p/" + post.shortcode
-                                em.description = post.caption if post.caption else ""
-                                em.set_author(name="{} (@{})".format(profile.full_name, profile.username),
-                                              url=short_url)
-                            if media in images:
-                                em.set_image(url=media)
-                                if len(medias) > 1:
-                                    em.set_footer(text="Media {}/{}".format(n, len(medias)))
-                                await self.bot.send_message(message.channel, embed=em)
-                            else:
-                                txt = "Media {}/{}\n".format(n, len(medias)) + media
-                                await self.bot.send_message(message.channel, txt)
-                            n += 1
+                        if len(medias) > 1 or len(videos) > 0:
+                            profile = post.owner_profile
+                            previews = medias
+                            await self.bot.delete_message(msg)
+                            n = 1
+                            for media in medias:
+                                if media in videos:
+                                    txt = "Media {}/{} · {}\n".format(
+                                        n, len(medias), post.date_utc.strftime("Le %d/%m/%Y à %H:%M")) + media
+                                    await self.bot.send_message(message.channel, txt)
+                                    n += 1
+                                    previews.remove(media)
+
+                            if previews:
+                                self.cache["_instagram"][message.id] = {"previews": previews,
+                                                                        "images": images,
+                                                                        "videos": videos,
+                                                                        "nb": n,
+                                                                        "post": post,
+                                                                        "profile": profile,
+                                                                        "message": message,
+                                                                        "posted" = False}
+                                await self.bot.add_reaction(message, "👁️")
 
 
             if not message.author.bot:
@@ -442,29 +446,61 @@ class Misc:
                         if message.mentions:
                             mention = message.mentions[0]
                             if mention.server_permissions.manage_roles and not user.server_permissions.manage_roles:
-                                detected = self.detect_roles_in_msg(message.server, message.content, 2)
-                                notif = []
-                                if detected:
-                                    print(detected)
-                                    for g in detected:
-                                        if g.id in rolelist:
-                                            try:
-                                                if g not in user.roles:
-                                                    await self.bot.add_roles(user, g)
-                                                    await self.bot.add_reaction(message, "✅")
-                                                    if g.id not in notif:
-                                                        if api.preload_channel(user.server, "app_autoattrib"):
-                                                            print("log auto_attrib")
-                                                            em = discord.Embed(
-                                                                description="A obtenu le rôle {} automatiquement après demande à un modérateur.".format(g.name),
-                                                                color=0x7B68EE, timestamp=datetime.utcnow())  # Violet
-                                                            em.set_author(name=str(user) + " ─ Attribution automatique de rôle", icon_url=user.avatar_url)
-                                                            em.set_footer(text="Demandeur ID: {}".format(user.id))
-                                                            await api.publish_log(user.server, "app_autoattrib",
-                                                                                  em)
-                                                            notif.append(g.id)
-                                            except:
-                                                pass
+                                if mention.id == "263440134853099531":
+                                    detected = self.detect_roles_in_msg(message.server, message.content, 2)
+                                    notif = []
+                                    if detected:
+                                        print(detected)
+                                        for g in detected:
+                                            if g.id in rolelist:
+                                                try:
+                                                    if g not in user.roles:
+                                                        await self.bot.add_roles(user, g)
+                                                        await self.bot.add_reaction(message, "✅")
+                                                        if g.id not in notif:
+                                                            if api.preload_channel(user.server, "app_autoattrib"):
+                                                                print("log auto_attrib")
+                                                                em = discord.Embed(
+                                                                    description="A obtenu le rôle {} automatiquement après demande à un modérateur.".format(g.name),
+                                                                    color=0x7B68EE, timestamp=datetime.utcnow())  # Violet
+                                                                em.set_author(name=str(user) + " ─ Attribution automatique de rôle", icon_url=user.avatar_url)
+                                                                em.set_footer(text="Demandeur ID: {}".format(user.id))
+                                                                await api.publish_log(user.server, "app_autoattrib",
+                                                                                      em)
+                                                                notif.append(g.id)
+                                                except:
+                                                    pass
+
+    async def on_react(self, user, reaction):
+        message = reaction.message
+        if message.server:
+            if reaction.emoji == "👁️":
+                if user.server_permissions.manage_messages or user == message.author:
+                    if message.id in self.cache["_instagram"]:
+                        if not self.cache["_instagram"][message.id]["posted"]:
+                            cache =  self.cache["_instagram"][message.id]
+                            post, profile = cache["post"], cache["profile"]
+                            images, videos = cache["images"], cache["videos"]
+                            n = cache["nb"]
+                            medias = cache["previews"]
+                            for media in medias:
+                                em = discord.Embed(color=message.author.color, timestamp=post.date_utc)
+                                if n == 1:
+                                    short_url = "https://www.instagram.com/p/" + post.shortcode
+                                    em.description = post.caption if post.caption else ""
+                                    em.set_author(name="{} (@{})".format(profile.full_name, profile.username),
+                                                  url=short_url)
+                                if media in images:
+                                    em.set_image(url=media)
+                                    if len(medias) > 1:
+                                        em.set_footer(text="Media {}/{}".format(n, len(medias)))
+                                    await self.bot.send_message(message.channel, embed=em)
+                                else:
+                                    txt = "Media {}/{} · {}\n".format(
+                                        n, len(medias), post.date_utc.strftime("Le %d/%m/%Y à %H:%M")) + media
+                                    await self.bot.send_message(message.channel, txt)
+                                n += 1
+                            self.cache["_instagram"][message.id]["posted"] = True
 
 def check_folders():
     if not os.path.exists("data/misc"):
@@ -487,4 +523,5 @@ def setup(bot):
     check_files()
     n = Misc(bot)
     bot.add_listener(n.on_mess, "on_message")
+    bot.add_listener(n.on_react, "on_reaction_add")
     bot.add_cog(n)
