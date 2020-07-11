@@ -433,7 +433,7 @@ class Misc:
                                                                         "post": post,
                                                                         "profile": profile,
                                                                         "message": message,
-                                                                        "posted" = False}
+                                                                        "posted": False}
                                 await self.bot.add_reaction(message, "👁️")
 
 
