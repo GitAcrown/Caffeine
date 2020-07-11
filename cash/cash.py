@@ -769,7 +769,7 @@ class Cash:
                 total += base
                 if data.raw["cache"]["last_pay"] == (datetime.now() - timedelta(days=1)).strftime("%d.%m.%Y"):
                     cons_bonus = round(base * 0.2)
-                    txt += "**+ {}** » Bonus de jours consécutifs (20% BJ)\n".format(cur.sformat(base))
+                    txt += "**+ {}** » Bonus de jours consécutifs (20% BJ)\n".format(cur.sformat(cons_bonus))
                     total += cons_bonus
                 data.raw["cache"]["last_pay"] = datetime.now().strftime("%d.%m.%Y")
             else:
