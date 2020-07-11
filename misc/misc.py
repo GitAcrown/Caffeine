@@ -410,7 +410,7 @@ class Misc:
                     await self.bot.send_typing(message.channel)
                     code = r[0]
                     post, images, videos = self.load_instagram_post(code)
-                    medias = images + videos
+                    medias = images[1:] + videos
                     if medias:
                         if len(medias) > 1 or videos:
                             profile = post.owner_profile
@@ -418,7 +418,7 @@ class Misc:
                             n = 1
                             for media in medias:
                                 if media in videos:
-                                    txt = "Media {}/{} · {}\n".format(
+                                    txt = "Preview {}/{} · {}\n".format(
                                         n, len(medias), post.date_utc.strftime("Publié le %d/%m/%Y à %H:%M")) + media
                                     await self.bot.send_message(message.channel, txt)
                                     n += 1
@@ -494,10 +494,10 @@ class Misc:
                                                       url=short_url)
                                     if media in images:
                                         em.set_image(url=media)
-                                        em.set_footer(text="Media {}/{}".format(n, total))
+                                        em.set_footer(text="Preview {}/{}".format(n, total))
                                         await self.bot.send_message(message.channel, embed=em)
                                     else:
-                                        txt = "Media {}/{} · {}\n".format(
+                                        txt = "Preview {}/{} · {}\n".format(
                                             n, total, post.date_utc.strftime("Publié le %d/%m/%Y à %H:%M")) + media
                                         await self.bot.send_message(message.channel, txt)
                                     n += 1
