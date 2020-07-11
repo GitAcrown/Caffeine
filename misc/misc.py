@@ -419,7 +419,7 @@ class Misc:
                             for media in medias:
                                 if media in videos:
                                     txt = "Media {}/{} · {}\n".format(
-                                        n, len(medias), post.date_utc.strftime("Le %d/%m/%Y à %H:%M")) + media
+                                        n, len(medias), post.date_utc.strftime("Publié le %d/%m/%Y à %H:%M")) + media
                                     await self.bot.send_message(message.channel, txt)
                                     n += 1
                                     previews.remove(media)
@@ -429,6 +429,7 @@ class Misc:
                                                                         "images": images,
                                                                         "videos": videos,
                                                                         "nb": n,
+                                                                        "total": len(medias),
                                                                         "post": post,
                                                                         "profile": profile,
                                                                         "message": message,
@@ -482,6 +483,7 @@ class Misc:
                                 post, profile = cache["post"], cache["profile"]
                                 images, videos = cache["images"], cache["videos"]
                                 n = cache["nb"]
+                                total = cache["total"]
                                 medias = cache["previews"]
                                 for media in medias:
                                     em = discord.Embed(color=message.author.color, timestamp=post.date_utc)
@@ -492,17 +494,16 @@ class Misc:
                                                       url=short_url)
                                     if media in images:
                                         em.set_image(url=media)
-                                        if len(medias) > 1:
-                                            em.set_footer(text="Media {}/{}".format(n, len(medias)))
+                                        em.set_footer(text="Media {}/{}".format(n, total))
                                         await self.bot.send_message(message.channel, embed=em)
                                     else:
                                         txt = "Media {}/{} · {}\n".format(
-                                            n, len(medias), post.date_utc.strftime("Le %d/%m/%Y à %H:%M")) + media
+                                            n, total, post.date_utc.strftime("Publié le %d/%m/%Y à %H:%M")) + media
                                         await self.bot.send_message(message.channel, txt)
                                     n += 1
                                 self.cache["_instagram"][message.id]["posted"] = True
                                 try:
-                                    await self.bot.remove_reaction(message, "👁️")
+                                    await self.bot.remove_reaction(message, "👁")
                                 except:
                                     pass
 
