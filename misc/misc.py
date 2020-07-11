@@ -412,6 +412,7 @@ class Misc:
                     medias = images + videos
                     if medias:
                         if len(medias) > 1 or videos:
+                            await self.bot.send_typing(message.channel)
                             profile = post.owner_profile
                             previews = medias
                             n = 1
