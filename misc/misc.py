@@ -471,7 +471,7 @@ class Misc:
                                                 except:
                                                     pass
 
-    async def on_react(self, user, reaction):
+    async def on_react(self, reaction, user):
         message = reaction.message
         if message.server:
             if reaction.emoji == "👁":
