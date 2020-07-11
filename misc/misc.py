@@ -501,6 +501,7 @@ class Misc:
                                     await self.bot.send_message(message.channel, txt)
                                 n += 1
                             self.cache["_instagram"][message.id]["posted"] = True
+                            await self.bot.remove_reaction(message, "👁️")
 
 def check_folders():
     if not os.path.exists("data/misc"):
